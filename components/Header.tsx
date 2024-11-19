@@ -63,10 +63,11 @@ export default function Header() {
                 <Link href="/login">Log in</Link>
               </Button>
             </div>
-            <div className="mt-3 px-2 space-y-1">
+            <div className="mt-3 px-2 space-y-1">s
               <Button asChild className="w-full">
                 <Link href="/signup">Sign up</Link>
               </Button>
+              
             </div>
           </div>
         </motion.div>
