@@ -40,7 +40,7 @@ export default function AutomationFeatures() {
             viewport={{ once: true }}
           >
            <h2 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900">
-  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">Supercharge</span> Your Lead Generation Strategy with iLead AI
+  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">Supercharge</span> Your Lead Generation Strategy with iSkala AI
 </h2>
             <div className="grid gap-8">
               {features.map((feature, index) => (

@@ -1,61 +1,68 @@
 import { NextResponse } from 'next/server';
 
+const SMARTLEAD_API_KEY = "33d095ab-79e0-4121-83ed-9191e9e0c6d0_fkcrn5o"; // Replace with your actual API key
+
 export async function POST(req: Request) {
-  const { fullName, email, password } = await req.json();
+  const body = await req.json();
+  const { name, email, password, permission, logo, logo_url } = body;
 
-  console.log('API Key:', process.env.SMARTLEAD_API_KEY ? 'Present' : 'Missing');
-
-  if (!process.env.SMARTLEAD_API_KEY) {
-    console.error('SMARTLEAD_API_KEY is not defined in environment variables');
+  if (!name || !email || !password) {
     return NextResponse.json(
-      { error: 'API key not configured' }, 
-      { status: 500 }
-    );
-  }
-
-  if (!fullName || !email || !password) {
-    return NextResponse.json(
-      { error: 'Missing required fields' }, 
+      { status: 'error', message: 'Missing required fields' }, 
       { status: 400 }
     );
   }
 
   try {
     const response = await fetch(
-      `https://server.smartlead.ai/api/v1/client/save?api_key=${process.env.SMARTLEAD_API_KEY}`,
+      `https://server.smartlead.ai/api/v1/client/save?api_key=${SMARTLEAD_API_KEY}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: fullName,
+          name,
           email,
           password,
-          permission: ['reply_master_inbox'],
-          logo: 'SmartGen Outreach',
-          logo_url: null,
+          permission,
+          logo,
+          logo_url
         }),
       }
     );
 
     const data = await response.json();
     
-    console.log('SmartLead API Response:', {
-      status: response.status,
-      data: data
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
+    if (data.message?.includes('already exist')) {
+      return NextResponse.json({
+        status: 'exists',
+        message: 'This email is already registered. Please sign in to continue.',
+      }, { status: 409 });
     }
 
-    return NextResponse.json(data, { status: 200 });
+    if (data.ok && data.clientId) {
+      return NextResponse.json({
+        status: 'success',
+        message: 'Account created successfully!',
+        data: {
+          clientId: data.clientId,
+          name: data.name,
+          email: data.email
+        }
+      }, { status: 200 });
+    }
+
+    return NextResponse.json({
+      status: 'error',
+      message: data.message || 'An error occurred during signup'
+    }, { status: 400 });
+
   } catch (error) {
     console.error('Error:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error' }, 
-      { status: 500 }
-    );
+    return NextResponse.json({ 
+      status: 'error',
+      message: 'Internal Server Error'
+    }, { status: 500 });
   }
 }

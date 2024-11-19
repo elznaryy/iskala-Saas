@@ -38,6 +38,7 @@ export default function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [isSuccess, setIsSuccess] = useState(false)
+  const [showLoginButton, setShowLoginButton] = useState(false)
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
@@ -83,36 +84,44 @@ export default function SignUpForm() {
     setIsLoading(true)
     setError('')
 
-    if (validateForm()) {
-      try {
-        const response = await fetch('/api/signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            fullName: formData.fullName,
-            email: formData.email,
-            password: formData.password,
-          }),
+    if (!validateForm()) {
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          permission: ["reply_master_inbox"],
+          logo: formData.fullName,
+          logo_url: null
         })
+      })
 
-        const data = await response.json()
+      const data = await response.json()
 
-        if (response.ok && data.ok && data.clientId) {
-          setIsSuccess(true)
-          toast.success('Account created successfully!')
-        } else {
-          setError(data.error || 'Failed to create account')
-          toast.error(data.error || 'Failed to create account')
-        }
-      } catch (err: unknown) {
-        console.error('Signup error:', err)
-        setError('An unexpected error occurred')
-        toast.error('An unexpected error occurred')
-      } finally {
-        setIsLoading(false)
+      if (data.status === 'exists') {
+        setError('This email is already registered. Please sign in to continue.')
+        setShowLoginButton(true)
+      } else if (data.status === 'success') {
+        toast.success('Account created successfully!')
+        setIsSuccess(true)
+        setShowLoginButton(true)
+      } else {
+        setError(data.message || 'An error occurred during signup')
       }
+    } catch (error) {
+      console.error(error)
+      setError('An unexpected error occurred')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -267,7 +276,19 @@ export default function SignUpForm() {
             </Button>
 
             {error && (
-              <p className="text-red-500 text-sm mt-2">{error}</p>
+              <div className="text-red-500 text-sm mt-2">
+                {error}
+              </div>
+            )}
+
+            {showLoginButton && (
+              <Button
+                type="button"
+                onClick={() => window.location.href = '/login'}
+                className="mt-4 w-full"
+              >
+                Go to Login
+              </Button>
             )}
           </form>
         )}

@@ -25,7 +25,7 @@ export default function Contact() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Mail className="text-blue-600" />
-                <span className="text-gray-800">contact@ilead.com</span>
+                <span className="text-gray-800">Elznary@iskala.net</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="text-blue-600" />

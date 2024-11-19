@@ -90,15 +90,15 @@ export default function TrustedBy() {
           </h3>
           <div className="space-y-4 text-gray-600">
             <p className="leading-relaxed">
-              iLead's advanced B2B lead generation platform combines AI-powered prospect identification, 
+              iLeads advanced B2B lead generation platform combines AI-powered prospect identification, 
               automated outreach campaigns, and intelligent lead scoring to help businesses generate more 
               qualified leads. Our comprehensive solution streamlines your sales pipeline, increases conversion 
               rates, and drives sustainable business growth through data-driven lead generation strategies.
             </p>
             <p className="leading-relaxed">
-              Whether you're a startup looking to build your customer base or an enterprise seeking to 
+              Whether youre a startup looking to build your customer base or an enterprise seeking to 
               optimize your lead generation process, iLead provides the tools and insights needed to 
-              succeed in today's competitive market.
+              succeed in todays competitive market.
             </p>
           </div>
         </motion.div>

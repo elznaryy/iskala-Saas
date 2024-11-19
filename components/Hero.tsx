@@ -24,7 +24,7 @@ export default function Hero() {
               </span>
             </h1>
             <p className="mx-auto max-w-[700px] text-gray-300 md:text-xl">
-            Maximize your business potential with iLead's cutting-edge Automated Outreach, 
+            Maximize your business potential with iSkala's cutting-edge Automated Outreach, 
         Deliverability Network, Sales Engagement, B2B Lead Database,  
         tailored to the unique needs of MENA businesses.
       
