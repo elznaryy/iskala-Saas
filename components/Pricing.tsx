@@ -7,33 +7,36 @@ import { Check } from 'lucide-react'
 const plans = [
   {
     name: "Starter Plan",
-    price: "$49",
+    price: "$100",
     features: [
       "500 leads per month",
-      "Basic email automation",
-      "1 user account",
-      "Email support"
+      "Ai email Copy & Strategy",
+      "Email support",
+      "Iskala university",
+      "Slack community access"
+    
     ]
   },
   {
     name: "Pro Plan",
-    price: "$99",
+    price: "$200",
     features: [
-      "2,000 leads per month",
+      "5K leads per month",
+      "Ai email Copy & Strategy",
+      "Custom Email Copy & Strategy",
       "Advanced email automation",
-      "5 user accounts",
-      "Priority email & chat support",
-      "API access"
+      "24/7 chat support",
+      "Email infrastructure Audit & Optimization",
+      "Iskala university",
+      "Slack community access"
+
     ]
   },
   {
     name: "Enterprise Plan",
     price: "Custom pricing",
     features: [
-      "Unlimited leads",
-      "Custom workflows",
-      "Unlimited user accounts",
-      "24/7 support",
+     "All Pro plan features",
       "Dedicated account manager",
       "Custom integrations"
     ]

@@ -78,30 +78,7 @@ export default function TrustedBy() {
           </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          viewport={{ once: true }}
-          className="mt-20 max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-lg"
-        >
-          <h3 className="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
-            Transform Your Lead Generation Strategy
-          </h3>
-          <div className="space-y-4 text-gray-600">
-            <p className="leading-relaxed">
-              iLeads advanced B2B lead generation platform combines AI-powered prospect identification, 
-              automated outreach campaigns, and intelligent lead scoring to help businesses generate more 
-              qualified leads. Our comprehensive solution streamlines your sales pipeline, increases conversion 
-              rates, and drives sustainable business growth through data-driven lead generation strategies.
-            </p>
-            <p className="leading-relaxed">
-              Whether youre a startup looking to build your customer base or an enterprise seeking to 
-              optimize your lead generation process, iLead provides the tools and insights needed to 
-              succeed in todays competitive market.
-            </p>
-          </div>
-        </motion.div>
+        
       </div>
     </section>
   )

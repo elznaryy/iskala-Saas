@@ -10,6 +10,10 @@ import Pricing from '@/components/Pricing'
 import Testimonials from '@/components/Testimonials'
 import Contact from '@/components/Contact'
 import Footer from '@/components/Footer'
+import AdvancedFeatures from '@/components/AdvancedFeatures'
+import AIEmailFeatures from '@/components/AIEmailFeatures'
+import IskalaUniversity from '@/components/iskalaUniversty'
+
 
 
 export default function Home() {
@@ -24,7 +28,11 @@ export default function Home() {
         <Hero />
         <TrustedBy />
         <Features />
+        <AIEmailFeatures />      {/* Add this line */}
+
         <AutomationFeatures />
+        <AdvancedFeatures />
+        <IskalaUniversity />
         <Pricing />
         <Testimonials />
         <Contact />

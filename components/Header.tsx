@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 
@@ -24,6 +25,14 @@ export default function Header() {
             </Link>
           </div>
           <nav className="hidden md:flex space-x-10">
+            <div className="flex items-center space-x-2">
+              <Link href="/ai-email-strategy" className="text-gray-300 hover:text-white transition-colors">
+                AI Email Strategy
+              </Link>
+              <Badge variant="secondary" className="bg-blue-600 text-white">
+                BETA
+              </Badge>
+            </div>
             <Link href="#features" className="text-gray-300 hover:text-white transition-colors">Features</Link>
             <Link href="#pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</Link>
             <Link href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Testimonials</Link>
@@ -52,6 +61,14 @@ export default function Header() {
           className="md:hidden bg-gray-900 bg-opacity-95"
         >
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <div className="flex items-center px-3 py-2">
+              <Link href="/ai-email-strategy" className="text-base font-medium text-gray-300 hover:text-white">
+                AI Email Strategy
+              </Link>
+              <Badge variant="secondary" className="ml-2 bg-blue-600 text-white">
+                BETA
+              </Badge>
+            </div>
             <Link href="#features" className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white">Features</Link>
             <Link href="#pricing" className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white">Pricing</Link>
             <Link href="#testimonials" className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white">Testimonials</Link>
@@ -63,11 +80,10 @@ export default function Header() {
                 <Link href="/login">Log in</Link>
               </Button>
             </div>
-            <div className="mt-3 px-2 space-y-1">s
+            <div className="mt-3 px-2 space-y-1">
               <Button asChild className="w-full">
                 <Link href="/signup">Sign up</Link>
               </Button>
-              
             </div>
           </div>
         </motion.div>
