@@ -233,7 +233,7 @@ export default function PortalPage() {
     )
   }
 
-  const stats = [
+  const stats: StatCardProps[] = [
     {
       title: 'AI Email Usage',
       value: usageData?.aiEmailUsage.count || 0,
@@ -257,9 +257,10 @@ export default function PortalPage() {
     },
     {
       title: 'Company Info',
-      value: userData?.basicInfo?.companyName || 'Not Set',
+      value: typeof userData?.basicInfo?.companyName === 'string' ? 0 : userData?.basicInfo?.companyName || 0,
       icon: <Activity className="w-6 h-6" />,
       description: `Email: ${userData?.basicInfo?.email || 'Not Set'}`,
+      status: undefined
     }
   ]
 
