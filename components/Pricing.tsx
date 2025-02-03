@@ -3,46 +3,65 @@
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Check } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 const plans = [
   {
-    name: "Starter Plan",
-    price: "$100",
+    name: "Free Plan",
+    price: "$0",
     features: [
-      "500 leads per month",
-      "Ai email Copy & Strategy",
+      "100 leads per month",
+      "Basic email automation",
       "Email support",
-      "Iskala university",
-      "Slack community access"
-    
+      "Iskala university access",
+      "Community access"
     ]
   },
   {
     name: "Pro Plan",
-    price: "$200",
+    price: "$100",
     features: [
-      "5K leads per month",
-      "Ai email Copy & Strategy",
-      "Custom Email Copy & Strategy",
+      "1K leads per month",
+      "AI email Copy & Strategy",
       "Advanced email automation",
-      "24/7 chat support",
-      "Email infrastructure Audit & Optimization",
-      "Iskala university",
-      "Slack community access"
-
+      "Priority support",
+      "Email infrastructure Audit",
+      "Iskala university access",
+      "Community access",
+      "Custom integrations"
     ]
   },
   {
     name: "Enterprise Plan",
-    price: "Custom pricing",
+    price: "Custom",
     features: [
-     "All Pro plan features",
+      "Unlimited leads",
+      "All Pro plan features",
       "Dedicated account manager",
-      "Custom integrations"
+      "Custom solutions",
+      "API access",
+      "Advanced analytics",
+      "Custom training sessions"
     ]
   }
 ];
+
 export default function Pricing() {
+  const router = useRouter()
+
+  const handlePlanClick = (planIndex: number) => {
+    if (planIndex === 0) {
+      // Free plan - Navigate to signup
+      router.push('/signup?plan=free')
+    } else {
+      // Pro and Enterprise plans - Scroll to contact section
+      const contactSection = document.getElementById('contact')
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+  }
+
   return (
     <section id="pricing" className="py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -85,13 +104,14 @@ export default function Pricing() {
                 <p className="mt-4 text-3xl font-extrabold text-gray-900">{plan.price}</p>
                 <p className="mt-1 text-sm text-gray-500">per month</p>
                 <Button 
+                  onClick={() => handlePlanClick(index)}
                   className={`mt-8 w-full ${
                     index === 1 
                       ? "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white" 
                       : "bg-gray-900 hover:bg-gray-800 text-white"
                   }`}
                 >
-                  {index === 2 ? "Contact Sales" : "Start free trial"}
+                  {index === 0 ? "Start free trial" : "Contact Sales"}
                 </Button>
               </div>
               <div className="pt-6 pb-8 px-6">

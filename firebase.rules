@@ -1,0 +1,156 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/config/adminUsers) 
+        && get(/databases/$(database)/documents/config/adminUsers).data.emails[request.auth.token.email];
+    }
+
+    function getUserPlanLimit() {
+      let user = get(/databases/$(database)/documents/Users/$(request.auth.uid));
+      return user.data.plan == 'pro' ? 20 : 
+             user.data.plan == 'starter' ? 10 : 5;
+    }
+
+    function canAccessTemplate(template) {
+      let user = get(/databases/$(database)/documents/Users/$(request.auth.uid));
+      return template.data.type == 'free' || user.data.plan != 'free';
+    }
+
+    // Email Templates Collection
+    match /emailTemplates/{templateId} {
+      allow read: if isSignedIn() && (
+        resource.data.type == 'free' || 
+        get(/databases/$(database)/documents/Users/$(request.auth.uid)).data.plan != 'free'
+      );
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Template Usage Tracking
+    match /templateUsage/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && (
+        (!resource.exists || resource.data.count < getUserPlanLimit()) &&
+        request.resource.data.count <= getUserPlanLimit() &&
+        request.resource.data.keys().hasAll(['count', 'lastReset', 'templates']) &&
+        request.resource.data.count is number &&
+        request.resource.data.lastReset is timestamp &&
+        request.resource.data.templates is list
+      );
+    }
+
+    // Template Categories
+    match /templateCategories/{categoryId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Template Analytics
+    match /templateAnalytics/{templateId} {
+      allow read: if isAdmin();
+      allow create, update: if isSignedIn();
+    }
+
+    // User Profile and Subscription
+    match /Users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+    
+    // SmartLead Credentials
+    match /smartlead/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+    
+    // Stripe-related Collections
+    match /customers/{customerId} {
+      allow read, write: if isSignedIn() && request.auth.uid == customerId;
+    }
+    
+    match /subscriptions/{subscriptionId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+    
+    // Usage Tracking Collections
+    match /aiEmailUsage/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+    
+    match /leadFinder/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+    
+    // Saved Chats Collections
+    match /savedChats/{chatId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data._placeholder == true
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && 
+        resource.data.userId == request.auth.uid && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow delete: if isSignedIn() && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Request Collections
+    match /copyRequests/{requestId} {
+      allow read: if isSignedIn() && 
+                    resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && 
+                     request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && 
+                     resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && 
+                     resource.data.userId == request.auth.uid &&
+                     resource.data.status == 'pending';
+    }
+    
+    match /emailRequests/{requestId} {
+      allow read: if isSignedIn() && 
+                    (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && 
+                     request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && 
+                     resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && 
+                     resource.data.userId == request.auth.uid;
+    }
+  }
+}
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /profileImages/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+                   request.auth.uid == userId;
+    }
+  }
+} 

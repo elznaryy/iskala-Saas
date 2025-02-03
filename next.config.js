@@ -1,7 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com'],
+    unoptimized: true,
+    domains: ['*'],
+  },
+  // Add this section to handle image paths
+  async rewrites() {
+    return [
+      {
+        source: '/images/:path*',
+        destination: '/images/:path*',
+      },
+    ]
   },
 }
 

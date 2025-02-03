@@ -2,20 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 4%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar: 240 10% 4%;
+    --header: 240 10% 3%;
+  }
+
+  /* Add default text color for the entire app */
+  body {
+    @apply text-gray-100;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .bg-gradient-custom {
+    background: linear-gradient(to bottom right, 
+      hsl(240 10% 4%),
+      hsl(240 10% 6%),
+      hsl(221.2 83.2% 12%)
+    );
+  }
+
+  .sidebar-gradient {
+    background-color: hsl(var(--sidebar));
+    @apply border border-gray-800 backdrop-blur-xl;
+  }
+
+  .header-gradient {
+    background-color: hsl(var(--header));
+    @apply border border-gray-800 backdrop-blur-md;
+  }
+
+  .menu-item {
+    @apply transition-colors duration-200;
+  }
+
+  .menu-item:hover {
+    background: linear-gradient(
+      to right,
+      hsl(221.2 83.2% 20% / 0.3),
+      hsl(221.2 83.2% 18% / 0.2)
+    );
+  }
+
+  .content-card {
+    background: linear-gradient(
+      to bottom right,
+      hsl(240 10% 5%),
+      hsl(240 10% 4%)
+    );
+    @apply border border-gray-800 rounded-lg shadow-sm border-opacity-20 text-gray-100;
+  }
+
+  /* Add text color utilities */
+  .text-default {
+    @apply text-gray-100;
+  }
+
+  .text-muted {
+    @apply text-gray-400;
+  }
+
+  .text-heading {
+    @apply text-white font-semibold;
+  }
+
+  /* Add input styles */
+  input, textarea, select {
+    @apply text-gray-100 bg-gray-800 border-gray-700;
+  }
+
+  /* Add button text colors */
+  button {
+    @apply text-gray-100;
+  }
 }

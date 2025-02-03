@@ -129,7 +129,7 @@ export default function AIEmailFeatures() {
                   Welcome to Your AI Strategy Assistant!
                 </h4>
                 <p className="text-gray-300 text-center">
-                  I'm here to help you create powerful B2B email campaigns. Click the button above to start generating your email copy or explore our email marketing strategies.
+                  I'm here to help you create powerful B2B email campaigns using our advanced AI technology. Click the button above to start generating your email copy or explore our email marketing strategies.
                 </p>
               </motion.div>
 

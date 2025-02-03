@@ -65,7 +65,7 @@ export default function Hero() {
           >
             <Image
               src="/images/hero.png"
-              alt="iLead Dashboard"
+              alt="Iskala Dashboard"
               width={800}
               height={600}
               className="w-full h-auto"

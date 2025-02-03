@@ -5,19 +5,19 @@ import Image from 'next/image'
 
 const testimonials = [
   {
-    quote: "We're impressed with the response rate; unlike typical outbound campaigns, our emails seemed personalized. Additionally, we closed a deal within just two weeks of partnering with ileads. Kudos to the team!",
+    quote: "We're impressed with the response rate; unlike typical outbound campaigns, our emails seemed personalized. Additionally, we closed a deal within just two weeks of partnering with Iskala. Kudos to the team!",
     author: "Helen",
     position: "Lead Generation Manager, ZenHr",
     image: "/images/Helen.jpg"
   },
   {
-    quote: "Despite real estate being new for ileads, their efforts resulted in 50+ meetings, high-quality leads, and four major clients closed, exceeding the initial investment.",
+    quote: "Despite real estate being new for Iskala, their efforts resulted in 50+ meetings, high-quality leads, and four major clients closed, exceeding the initial investment.",
     author: "Kyle connor",
     position: "CEO, DIY",
     image: "/images/Kyle.png"
   },
   {
-    quote: "ileads Business Solutions provides high-quality leads and detailed reports for transparency. The team is prompt, responsive, and creatively exceeds expectations to support client goals.",
+    quote: "Iskala Business Solutions provides high-quality leads and detailed reports for transparency. The team is prompt, responsive, and creatively exceeds expectations to support client goals.",
     author: "Mirna Cindric",
     position: "Project Manager, McKnight Media",
     image: "/images/Mirna.jpg"

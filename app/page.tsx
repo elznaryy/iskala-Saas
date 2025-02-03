@@ -3,7 +3,6 @@
 import { useScroll, useTransform, motion } from 'framer-motion'
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
-import TrustedBy from '@/components/TrustedBy'
 import Features from '@/components/Features'
 import AutomationFeatures from '@/components/AutomationFeatures'
 import Pricing from '@/components/Pricing'
@@ -13,7 +12,7 @@ import Footer from '@/components/Footer'
 import AdvancedFeatures from '@/components/AdvancedFeatures'
 import AIEmailFeatures from '@/components/AIEmailFeatures'
 import IskalaUniversity from '@/components/iskalaUniversty'
-
+import TrustedBy from '@/components/TrustedBy'
 
 
 export default function Home() {
@@ -28,7 +27,7 @@ export default function Home() {
         <Hero />
         <TrustedBy />
         <Features />
-        <AIEmailFeatures />      {/* Add this line */}
+        <AIEmailFeatures />
 
         <AutomationFeatures />
         <AdvancedFeatures />

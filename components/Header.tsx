@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -21,7 +22,14 @@ export default function Header() {
         <div className="flex h-20 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-white">iSkala</span>
+              <Image
+                src="/images/Asset2.png"
+                alt="iSkala Logo"
+                width={150}
+                height={50}
+                className="w-auto h-8"
+                priority
+              />
             </Link>
           </div>
           <nav className="hidden md:flex space-x-10">
@@ -40,7 +48,7 @@ export default function Header() {
           </nav>
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="ghost" className="text-gray-300 hover:text-white" asChild>
-              <Link href="https://app.iskala.me/client-login">Log in</Link>
+              <Link href="/login">Log in</Link>
             </Button>
             <Button className="bg-blue-600 hover:bg-blue-700 text-white" asChild>
               <Link href="/signup">Sign up</Link>

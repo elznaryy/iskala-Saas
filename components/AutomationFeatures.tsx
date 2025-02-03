@@ -13,7 +13,7 @@ const features = [
   {
     icon: <RotateCcw className="w-10 h-10 text-blue-600" />,
     title: "Save 100s Of Hours With Auto-Mailbox Rotation",
-    description: "Stop launching multiple campaigns for each mailbox. iLead will auto-rotate your mailboxes across your leads."
+    description: "Stop launching multiple campaigns for each mailbox. Iskala will auto-rotate your mailboxes across your leads."
   },
   {
     icon: <Workflow className="w-10 h-10 text-blue-600" />,
