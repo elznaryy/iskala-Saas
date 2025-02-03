@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/use-toast"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -43,7 +44,6 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   }
 
   const displayName = userData?.basicInfo?.name || userData?.basicInfo?.email || userData?.email || ''
-  const userImage = userData?.basicInfo?.photoURL || userData?.photoURL
   const firstLetter = displayName.charAt(0).toUpperCase()
 
   return (
@@ -94,21 +94,6 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                     <p className="text-xs text-gray-400">
                       {userData?.plan === 'pro' ? 'Pro Plan' : 'Free Plan'}
                     </p>
-                  </div>
-                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                    {userImage ? (
-                      <Image
-                        src={userImage}
-                        alt="Profile"
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 rounded-full"
-                      />
-                    ) : (
-                      <span className="text-white text-sm">
-                        {firstLetter}
-                      </span>
-                    )}
                   </div>
                 </div>
               </DropdownMenuTrigger>

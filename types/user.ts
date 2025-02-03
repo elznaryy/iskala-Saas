@@ -1,11 +1,21 @@
+export interface UserBasicInfo {
+  name: string
+  email: string
+  companyName: string
+  phoneNumber: string
+  photoURL?: string
+}
+
 export interface UserData {
   uid: string
-  email?: string
-  name?: string
-  plan?: 'free' | 'starter' | 'pro'
+  email: string
+  basicInfo: UserBasicInfo
+  photoURL?: string
+  plan: 'free' | 'pro'
   subscription?: {
-    planId: string
     status: string
+    planId: string
   }
-  // ... other user properties
+  createdAt: Date
+  updatedAt: Date
 }
