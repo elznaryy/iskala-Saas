@@ -43,7 +43,6 @@ import {
   addDoc,
   setDoc,
   deleteDoc,
-  deleteUser
 } from 'firebase/firestore'
 import { 
   createUserWithEmailAndPassword, 
