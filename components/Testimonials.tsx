@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { useState } from 'react'
 
 const testimonials = [
   {
@@ -20,11 +21,17 @@ const testimonials = [
     quote: "Iskala Business Solutions provides high-quality leads and detailed reports for transparency. The team is prompt, responsive, and creatively exceeds expectations to support client goals.",
     author: "Mirna Cindric",
     position: "Project Manager, McKnight Media",
-    image: "/images/Mirna.jpg"
+    image: "/images/mirna.jpg"
   }
 ]
 
 export default function Testimonials() {
+  const [imageError, setImageError] = useState<{ [key: string]: boolean }>({})
+
+  const handleImageError = (author: string) => {
+    setImageError(prev => ({ ...prev, [author]: true }))
+  }
+
   return (
     <section id="testimonials" className="py-20 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,13 +59,16 @@ export default function Testimonials() {
                   &ldquo;{testimonial.quote}&rdquo;
                 </div>
                 <div className="flex items-center mt-6">
-                  <Image
-                    src={testimonial.image}
-                    alt={testimonial.author}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                    <Image
+                      src={imageError[testimonial.author] ? '/images/default-avatar.png' : testimonial.image}
+                      alt={testimonial.author}
+                      fill
+                      className="object-cover"
+                      onError={() => handleImageError(testimonial.author)}
+                      sizes="40px"
+                    />
+                  </div>
                   <div className="ml-4">
                     <div className="text-lg font-medium text-gray-900">
                       {testimonial.author}
