@@ -12,15 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription
-} from "./ui/dialog"
-import { toast } from 'react-hot-toast'
+} from "@/components/ui/dialog"
+import { toast } from "@/components/ui/use-toast"
 import { useUser } from '@/contexts/UserContext'
 import { useRouter } from 'next/navigation'
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebase/config'
-import { LMSCredentials } from '@/types/lmsCredentials'
-import { hasLMSAccess } from '@/lib/utils/planUtils'
 import Image from 'next/image'
+import { db } from '@/lib/firebase/config'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 interface LearnerCredentials {
   fullName: string
@@ -57,6 +55,18 @@ interface UserData {
   }
 }
 
+interface LMSStatus {
+  status: 'pending' | 'active'
+  email: string
+  submittedAt: Date
+}
+
+interface LMSFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -78,7 +88,7 @@ const itemVariants = {
 
 const previewVideo: PreviewVideo = {
   thumbnailUrl: '/images/course-preview.jpg',
-  videoUrl: 'https://your-video-url.com',
+  videoUrl: 'https://iskala.trainercentralsite.com/#/allcourses',
   title: 'Master Cold Email Marketing: Complete Course Preview',
   duration: '2:30',
   description: 'Get a sneak peek into our comprehensive cold email marketing course. Learn how to craft compelling emails, improve deliverability, and increase your response rates.',
@@ -91,178 +101,166 @@ const previewVideo: PreviewVideo = {
   ]
 }
 
+const ZOHO_WEBHOOK_URL = 'https://flow.zoho.com/849281392/flow/webhook/incoming?zapikey=1001.c7d89d205781e040ed31742457138bf8.189c590d02eb4e16d06c3d5d643e7e61&isdebug=false'
+
+// Update the collection name
+const LMS_COLLECTION = 'lmsjoin'
+
 export default function IskalaUniversity() {
   const { userData } = useUser()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [showSignupForm, setShowSignupForm] = useState(false)
-  const [existingRequest, setExistingRequest] = useState<any>(null)
-  const [credentials, setCredentials] = useState<LearnerCredentials>({
-    fullName: '',
-    companyName: '',
-    email: '',
-    submittedAt: new Date()
+  const [showForm, setShowForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [lmsStatus, setLmsStatus] = useState<LMSStatus | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [formData, setFormData] = useState<LMSFormData>({
+    firstName: '',
+    lastName: '',
+    email: ''
   })
 
   // Check if user has LMS access based on their plan
-  const canAccessLMS = userData ? hasLMSAccess(userData.plan) : false
+  const canAccessLMS = userData?.plan === 'pro'
 
+  // Check existing LMS status
   useEffect(() => {
-    const checkLMSAccess = async () => {
+    const checkLMSStatus = async () => {
       if (!userData?.uid) return
-      
+
       try {
-        const credentialsRef = doc(db, 'lmsCredentials', userData.uid)
-        const credentialsDoc = await getDoc(credentialsRef)
-        
-        if (credentialsDoc.exists()) {
-          // Store existing request data
-          setExistingRequest(credentialsDoc.data())
-          setShowSignupForm(false)
+        const lmsDoc = await getDoc(doc(db, LMS_COLLECTION, userData.uid))
+        if (lmsDoc.exists()) {
+          setLmsStatus(lmsDoc.data() as LMSStatus)
         }
       } catch (error) {
-        console.error('Error checking LMS access:', error)
+        console.error('Error checking LMS status:', error)
       } finally {
-        setLoading(false)
+        setIsLoading(false)
       }
     }
 
-    checkLMSAccess()
+    checkLMSStatus()
   }, [userData?.uid])
 
-  const getRequestStatus = () => {
-    if (!existingRequest) return null
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
 
-    const submittedAt = existingRequest.submittedAt?.toDate()
-    if (!submittedAt) return null
+    try {
+      if (!userData?.uid) throw new Error('Not authenticated')
 
-    const hoursSinceSubmission = (new Date().getTime() - submittedAt.getTime()) / (1000 * 60 * 60)
-    const hoursRemaining = Math.max(0, 24 - hoursSinceSubmission)
+      // Save to Firebase with the correct collection name
+      await setDoc(doc(db, LMS_COLLECTION, userData.uid), {
+        status: 'pending',
+        email: formData.email,
+        submittedAt: serverTimestamp(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        userId: userData.uid
+      })
 
-    return {
-      status: existingRequest.status,
-      hoursRemaining: Math.round(hoursRemaining)
+      // Call our API route instead of Zoho directly
+      const response = await fetch('/api/lms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim(),
+          userId: userData.uid,
+          plan: userData.plan
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit request')
+      }
+
+      // Update local state
+      setLmsStatus({
+        status: 'pending',
+        email: formData.email,
+        submittedAt: new Date()
+      })
+
+      toast({
+        title: 'Request Submitted Successfully',
+        description: 'Please check your email for LMS access instructions.',
+      })
+
+      setShowForm(false)
+      setFormData({ firstName: '', lastName: '', email: '' })
+
+    } catch (error) {
+      console.error('Error submitting LMS request:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to submit request',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const renderAccessButton = () => {
-    if (loading) {
+  const renderLMSButton = () => {
+    if (!canAccessLMS) {
       return (
-        <Button disabled>
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          Loading...
+        <Button
+          onClick={() => router.push('/portal?tab=billing')}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Upgrade to Join LMS
         </Button>
       )
     }
 
-    const requestStatus = getRequestStatus()
-
-    if (requestStatus) {
-      if (requestStatus.status === 'pending') {
-        return (
-          <div className="text-right">
-            <Button disabled className="bg-yellow-600">
-              Request Pending
-            </Button>
-            <p className="text-sm text-gray-400 mt-2">
-              {requestStatus.hoursRemaining > 0 
-                ? `Please check your email (${existingRequest.email}). Access will be granted within ${requestStatus.hoursRemaining} hours.`
-                : 'Your request is being processed. Please check your email for access instructions.'}
-            </p>
-          </div>
-        )
-      }
-      if (requestStatus.status === 'active') {
-        return (
-          <Button 
-            onClick={() => window.open('your-lms-url', '_blank')}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            Access LMS
+    if (lmsStatus?.status === 'pending') {
+      return (
+        <div className="text-right">
+          <Button disabled className="bg-yellow-600">
+            Request Pending
           </Button>
-        )
-      }
+          <p className="text-sm text-gray-400 mt-2">
+            Please check your email ({lmsStatus.email}) for access instructions.
+          </p>
+        </div>
+      )
+    }
+
+    if (lmsStatus?.status === 'active') {
+      return (
+        <div className="text-right">
+          <p className="text-sm text-gray-400 mb-2">
+            Already have access? Check your email for invitation.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => toast({
+              title: 'Need Help?',
+              description: 'Please contact customer support if you need assistance.',
+            })}
+          >
+            Contact Support
+          </Button>
+        </div>
+      )
     }
 
     return (
       <Button
-        onClick={() => setShowSignupForm(true)}
+        onClick={() => setShowForm(true)}
         className="bg-blue-600 hover:bg-blue-700"
-        disabled={!canAccessLMS}
       >
-        {canAccessLMS ? 'Join LMS' : 'Upgrade to Access LMS'}
+        Join LMS
       </Button>
     )
   }
 
-  const handleSignup = async () => {
-    if (!userData?.uid) {
-      toast.error('Please sign in to access LMS')
-      return
-    }
-
-    if (!canAccessLMS) {
-      toast.error('Please upgrade your plan to access LMS')
-      router.push('/portal?tab=billing')
-      return
-    }
-
-    try {
-      setLoading(true)
-
-      // Validate required fields
-      if (!credentials.fullName.trim()) throw new Error('Full name is required')
-      if (!credentials.email.trim()) throw new Error('Email is required')
-      if (!credentials.companyName.trim()) throw new Error('Company name is required')
-
-      const names = credentials.fullName.trim().split(' ')
-      
-      const lmsCredentials: LMSCredentials = {
-        id: userData.uid,
-        userId: userData.uid,
-        firstName: names[0] || '',
-        lastName: names.slice(1).join(' ') || '',
-        email: credentials.email.trim(),
-        companyName: credentials.companyName.trim(),
-        submittedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        status: 'pending' as const,
-        password: '' // Will be set by the LMS system
-      }
-
-      // Use setDoc with merge option to handle updates
-      await setDoc(
-        doc(db, 'lmsCredentials', userData.uid), 
-        lmsCredentials,
-        { merge: true }
-      )
-      
-      setExistingRequest(lmsCredentials)
-      setShowSignupForm(false)
-      
-      toast.success('Request submitted successfully! You will receive an email within 24 hours.')
-    } catch (error) {
-      console.error('Error submitting LMS request:', error)
-      toast.error(
-        error instanceof Error 
-          ? error.message 
-          : 'Failed to submit request'
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    )
-  }
-
-  // Check if user has LMS access
-  if (!hasLMSAccess(userData?.plan || 'free')) {
+  // If user is not on Pro plan, show upgrade message
+  if (!canAccessLMS) {
     return (
       <div className="text-center py-12">
         <Shield className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -273,7 +271,7 @@ export default function IskalaUniversity() {
           Upgrade to Pro to access iSkala University LMS
         </p>
         <Button
-          onClick={() => window.location.href = '/portal?tab=billing'}
+          onClick={() => router.push('/portal?tab=billing')}
           className="bg-blue-600 hover:bg-blue-700"
         >
           Upgrade Now
@@ -285,216 +283,139 @@ export default function IskalaUniversity() {
   return (
     <div className="space-y-12">
       {/* Header Section */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">
-          iSkala University
-        </h2>
-        <p className="text-gray-400">
-          Master the art of cold emailing with our comprehensive courses
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            iSkala University
+          </h2>
+          <p className="text-gray-400">
+            Master the art of cold emailing with our comprehensive courses
+          </p>
+        </div>
+        {renderLMSButton()}
       </div>
 
-      {/* LMS Access Section */}
-      <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h3 className="text-xl font-semibold text-white mb-2">LMS Access</h3>
-            <p className="text-gray-400">Request access to our learning platform</p>
-          </div>
-          {renderAccessButton()}
+      {/* Preview Video Section */}
+      <div className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="p-6 border-b border-gray-700">
+          <h3 className="text-xl font-semibold text-white mb-2">
+            Course Preview
+          </h3>
+          <p className="text-gray-400">
+            Watch our course trailer to see what you'll learn
+          </p>
         </div>
 
-        <Dialog open={showSignupForm} onOpenChange={setShowSignupForm}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Join iSkala University</DialogTitle>
-              <DialogDescription className="text-sm text-gray-500 mt-2">
-                Complete this form to request access. You'll receive an invitation email within 24 hours.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              handleSignup()
-            }} className="space-y-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Full Name *</label>
-                <Input
-                  type="text"
-                  value={credentials.fullName}
-                  onChange={(e) => setCredentials(prev => ({
-                    ...prev,
-                    fullName: e.target.value
-                  }))}
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Company Name *</label>
-                <Input
-                  type="text"
-                  value={credentials.companyName}
-                  onChange={(e) => setCredentials(prev => ({
-                    ...prev,
-                    companyName: e.target.value
-                  }))}
-                  placeholder="Enter your company name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email Address *</label>
-                <Input
-                  type="email"
-                  value={credentials.email}
-                  onChange={(e) => setCredentials(prev => ({
-                    ...prev,
-                    email: e.target.value
-                  }))}
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              <Button 
-                type="submit"
-                disabled={loading || !credentials.fullName || !credentials.email || !credentials.companyName}
-                className="w-full"
+        <div className="grid lg:grid-cols-3 gap-6 p-6">
+          {/* Video Player */}
+          <div className="lg:col-span-2">
+            <div className="relative aspect-video rounded-lg overflow-hidden group">
+              <Image
+                src="/images/courseimage.jpg"
+                alt="Course Preview"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+              />
+              {/* Dark Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+              
+              {/* Play Button */}
+              <Link 
+                href={previewVideo.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0 flex items-center justify-center group"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit Request'
-                )}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-blue-600/90 flex items-center justify-center transform group-hover:scale-110 transition-all duration-300">
+                    <Play className="w-8 h-8 text-white ml-1" />
+                  </div>
+                  <motion.div 
+                    className="absolute inset-0 w-20 h-20 rounded-full bg-blue-600/50"
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity,
+                      ease: "easeInOut" 
+                    }}
+                  />
+                </div>
+              </Link>
 
-        {/* Preview Video Section */}
-        <div className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
-          <div className="p-6 border-b border-gray-700">
-            <h3 className="text-xl font-semibold text-white mb-2">
-              Course Preview
-            </h3>
-            <p className="text-gray-400">
-              Watch our course trailer to see what you'll learn
-            </p>
+              {/* Video Info */}
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <h4 className="text-lg font-medium text-white mb-2">
+                  {previewVideo.title}
+                </h4>
+                <div className="flex items-center text-sm text-gray-300">
+                  <Clock className="w-4 h-4 mr-1" />
+                  {previewVideo.duration}
+                </div>
+              </div>
+            </div>
+
+            {/* Video Description */}
+            <div className="mt-4 p-4 bg-gray-900/50 rounded-lg">
+              <p className="text-gray-300">
+                {previewVideo.description}
+              </p>
+            </div>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-6 p-6">
-            {/* Video Player */}
-            <div className="lg:col-span-2">
-              <div className="relative aspect-video rounded-lg overflow-hidden group">
-                <Image
-                  src="/images/courseimage.jpg"
-                  alt="Course Preview"
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
-                />
-                {/* Dark Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                
-                {/* Play Button */}
-                <Link 
-                  href={previewVideo.videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute inset-0 flex items-center justify-center group"
-                >
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-blue-600/90 flex items-center justify-center transform group-hover:scale-110 transition-all duration-300">
-                      <Play className="w-8 h-8 text-white ml-1" />
+          {/* Chapters List */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-900/50 rounded-lg h-full">
+              <div className="p-4 border-b border-gray-700">
+                <h4 className="text-lg font-semibold text-white">
+                  Course Chapters
+                </h4>
+              </div>
+              <div className="p-2">
+                {previewVideo.chapters.map((chapter, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center p-3 rounded-lg hover:bg-gray-800/50 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 bg-blue-600/10 rounded-lg flex items-center justify-center mr-3">
+                      <span className="text-sm font-medium text-blue-400">
+                        {chapter.time}
+                      </span>
                     </div>
-                    <motion.div 
-                      className="absolute inset-0 w-20 h-20 rounded-full bg-blue-600/50"
-                      animate={{ scale: [1, 1.5, 1] }}
-                      transition={{ 
-                        duration: 2, 
-                        repeat: Infinity,
-                        ease: "easeInOut" 
-                      }}
-                    />
-                  </div>
-                </Link>
-
-                {/* Video Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h4 className="text-lg font-medium text-white mb-2">
-                    {previewVideo.title}
-                  </h4>
-                  <div className="flex items-center text-sm text-gray-300">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {previewVideo.duration}
-                  </div>
-                </div>
-              </div>
-
-              {/* Video Description */}
-              <div className="mt-4 p-4 bg-gray-900/50 rounded-lg">
-                <p className="text-gray-300">
-                  {previewVideo.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Chapters List */}
-            <div className="lg:col-span-1">
-              <div className="bg-gray-900/50 rounded-lg h-full">
-                <div className="p-4 border-b border-gray-700">
-                  <h4 className="text-lg font-semibold text-white">
-                    Course Chapters
-                  </h4>
-                </div>
-                <div className="p-2">
-                  {previewVideo.chapters.map((chapter, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center p-3 rounded-lg hover:bg-gray-800/50 transition-colors group cursor-pointer"
-                    >
-                      <div className="flex-shrink-0 w-10 h-10 bg-blue-600/10 rounded-lg flex items-center justify-center mr-3">
-                        <span className="text-sm font-medium text-blue-400">
-                          {chapter.time}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <h5 className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
-                          {chapter.title}
-                        </h5>
-                      </div>
-                      <Play className="w-4 h-4 text-gray-400 group-hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-all" />
-                    </motion.div>
-                  ))}
-                </div>
+                    <div className="flex-1">
+                      <h5 className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
+                        {chapter.title}
+                      </h5>
+                    </div>
+                    <Play className="w-4 h-4 text-gray-400 group-hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-all" />
+                  </motion.div>
+                ))}
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Course Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gray-900/50">
-            <div className="text-center p-4 rounded-lg bg-gray-800/50"> 
-              <div className="text-2xl font-bold text-blue-400 mb-1">10+</div>
-              <div className="text-sm text-gray-400">Video Lessons</div>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-gray-800/50">
-              <div className="text-2xl font-bold text-blue-400 mb-1">4h</div>
-              <div className="text-sm text-gray-400">Total Duration</div>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-gray-800/50">
-              <div className="text-2xl font-bold text-blue-400 mb-1">24/7</div>
-              <div className="text-sm text-gray-400">Access</div>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-gray-800/50">
-              <div className="text-2xl font-bold text-blue-400 mb-1">100%</div>
-              <div className="text-sm text-gray-400">Online</div>
-            </div>
+        {/* Course Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gray-900/50">
+          <div className="text-center p-4 rounded-lg bg-gray-800/50"> 
+            <div className="text-2xl font-bold text-blue-400 mb-1">10+</div>
+            <div className="text-sm text-gray-400">Video Lessons</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-gray-800/50">
+            <div className="text-2xl font-bold text-blue-400 mb-1">4h</div>
+            <div className="text-sm text-gray-400">Total Duration</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-gray-800/50">
+            <div className="text-2xl font-bold text-blue-400 mb-1">24/7</div>
+            <div className="text-sm text-gray-400">Access</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-gray-800/50">
+            <div className="text-2xl font-bold text-blue-400 mb-1">100%</div>
+            <div className="text-sm text-gray-400">Online</div>
           </div>
         </div>
       </div>
@@ -517,6 +438,77 @@ export default function IskalaUniversity() {
           description="Earn an iSkala Cold Email Specialist certification upon completion of the course."
         />
       </div>
+
+      {/* LMS Join Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Join iSkala University LMS</DialogTitle>
+            <DialogDescription>
+              Fill in your details to get access to our learning platform.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">First Name *</label>
+              <Input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  firstName: e.target.value
+                }))}
+                placeholder="Enter your first name"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Last Name *</label>
+              <Input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  lastName: e.target.value
+                }))}
+                placeholder="Enter your last name"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Email Address *</label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  email: e.target.value
+                }))}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Request'
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

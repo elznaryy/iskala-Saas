@@ -19,44 +19,50 @@ export default function Header() {
       className="absolute top-0 left-0 right-0 z-40 w-full"
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-16 sm:h-20 md:h-24 lg:h-32 items-center justify-between">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center">
               <Image
                 src="/images/Asset2.png"
                 alt="iSkala Logo"
-                width={150}
-                height={50}
-                className="w-auto h-8"
+                width={400}
+                height={133}
+                className="w-auto h-8 sm:h-12 md:h-16 lg:h-20"
                 priority
+                unoptimized
               />
             </Link>
           </div>
-          <nav className="hidden md:flex space-x-10">
+          <nav className="hidden md:flex space-x-4 lg:space-x-10">
             <div className="flex items-center space-x-2">
-              <Link href="/ai-email-strategy" className="text-gray-300 hover:text-white transition-colors">
+              <Link href="/ai-email-strategy" className="text-sm lg:text-base text-gray-300 hover:text-white transition-colors">
                 AI Email Strategy
               </Link>
-              <Badge variant="secondary" className="bg-blue-600 text-white">
+              <Badge variant="secondary" className="bg-blue-600 text-white text-xs">
                 BETA
               </Badge>
             </div>
-            <Link href="#features" className="text-gray-300 hover:text-white transition-colors">Features</Link>
-            <Link href="#pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</Link>
-            <Link href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Testimonials</Link>
-            <Link href="#contact" className="text-gray-300 hover:text-white transition-colors">Contact</Link>
+            <Link href="#features" className="text-sm lg:text-base text-gray-300 hover:text-white transition-colors">Features</Link>
+            <Link href="#pricing" className="text-sm lg:text-base text-gray-300 hover:text-white transition-colors">Pricing</Link>
+            <Link href="#testimonials" className="text-sm lg:text-base text-gray-300 hover:text-white transition-colors">Testimonials</Link>
+            <Link href="#contact" className="text-sm lg:text-base text-gray-300 hover:text-white transition-colors">Contact</Link>
           </nav>
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" className="text-gray-300 hover:text-white" asChild>
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+            <Button variant="ghost" className="text-sm lg:text-base text-gray-300 hover:text-white" asChild>
               <Link href="/login">Log in</Link>
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white" asChild>
+            <Button className="text-sm lg:text-base bg-blue-600 hover:bg-blue-700 text-white" asChild>
               <Link href="/signup">Sign up</Link>
             </Button>
           </div>
           <div className="md:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white">
-              {isMenuOpen ? <X /> : <Menu />}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsMenuOpen(!isMenuOpen)} 
+              className="text-white"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
@@ -68,29 +74,37 @@ export default function Header() {
           exit={{ opacity: 0, y: -20 }}
           className="md:hidden bg-gray-900 bg-opacity-95"
         >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <div className="flex items-center px-3 py-2">
-              <Link href="/ai-email-strategy" className="text-base font-medium text-gray-300 hover:text-white">
+          <div className="px-4 pt-2 pb-3 space-y-1">
+            <div className="flex items-center py-2">
+              <Link 
+                href="/ai-email-strategy" 
+                className="text-base text-gray-300 hover:text-white"
+                onClick={() => setIsMenuOpen(false)}
+              >
                 AI Email Strategy
               </Link>
               <Badge variant="secondary" className="ml-2 bg-blue-600 text-white">
                 BETA
               </Badge>
             </div>
-            <Link href="#features" className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white">Features</Link>
-            <Link href="#pricing" className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white">Pricing</Link>
-            <Link href="#testimonials" className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white">Testimonials</Link>
-            <Link href="#contact" className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white">Contact</Link>
+            {['Features', 'Pricing', 'Testimonials', 'Contact'].map((item) => (
+              <Link
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                className="block py-2 text-base text-gray-300 hover:text-white"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item}
+              </Link>
+            ))}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-700">
-            <div className="flex items-center px-5">
+            <div className="flex flex-col space-y-3 px-4">
               <Button variant="ghost" asChild className="w-full text-gray-300 hover:text-white">
-                <Link href="/login">Log in</Link>
+                <Link href="/login" onClick={() => setIsMenuOpen(false)}>Log in</Link>
               </Button>
-            </div>
-            <div className="mt-3 px-2 space-y-1">
               <Button asChild className="w-full">
-                <Link href="/signup">Sign up</Link>
+                <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Sign up</Link>
               </Button>
             </div>
           </div>

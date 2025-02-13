@@ -5,36 +5,14 @@ import { motion } from 'framer-motion'
 import { useUser } from '@/contexts/UserContext'
 import { useRouter } from 'next/navigation'
 import { 
-  Activity, 
-  Users, 
-  Mail, 
   Bot, 
   FileText, 
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
+  Activity,
   Sparkles
 } from 'lucide-react'
 import { Loading } from './components/ui/loading'
 import { db } from '@/lib/firebase/config'
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
-
-interface UserData {
-  uid: string
-  basicInfo: {
-    email: string
-    name: string
-    companyName: string
-    phoneNumber: string
-    plan: string
-  }
-  subscription?: {
-    planId: string
-    status: string
-  }
-  plan?: string
-}
 
 interface StatCardProps {
   title: string
@@ -42,37 +20,6 @@ interface StatCardProps {
   icon: React.ReactNode
   description: string
   status?: 'success' | 'warning' | 'error'
-}
-
-interface UsageData {
-  aiEmailUsage: {
-    count: number
-    lastResetDate: Date
-    plan: string
-    totalLeads: number
-    updatedAt: Date
-  }
-  leadFinder: {
-    count: number
-    lastResetDate: Date
-    lastUpdated: Date
-    plan: string
-    totalLeads: number
-    updatedAt: Date
-  }
-  copyRequests: {
-    count: number
-    lastResetDate: Date
-    plan: string
-    status: string
-    totalLeads: number
-    updatedAt: Date
-  }
-  smartlead: {
-    companyName: string
-    email: string
-    createdAt: Date
-  }
 }
 
 function StatCard({ title, value, icon, description, status }: StatCardProps) {
@@ -110,7 +57,7 @@ function StatCard({ title, value, icon, description, status }: StatCardProps) {
 export default function PortalPage() {
   const { userData, loading } = useUser()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const [usageData, setUsageData] = useState<UsageData | null>(null)
+  const [usageData, setUsageData] = useState<any>(null)
   const [isLoadingUsage, setIsLoadingUsage] = useState(true)
   const router = useRouter()
 
@@ -121,77 +68,25 @@ export default function PortalPage() {
       try {
         setIsLoadingUsage(true)
         
-        // Fetch data from different collections
-        const aiEmailRef = doc(db, 'aiEmailUsage', userData.uid)
-        const leadFinderRef = doc(db, 'leadFinder', userData.uid)
-        const copyRequestsRef = collection(db, 'copyRequests')
-        const smartleadRef = doc(db, 'smartlead', userData.uid)
-        const userRef = doc(db, 'Users', userData.uid)
+        // Update the reference to the correct collection path
+        const usageRef = doc(db, 'usage', userData.uid)
+        const usageDoc = await getDoc(usageRef)
 
-        const [aiEmailDoc, leadFinderDoc, smartleadDoc, userDoc] = await Promise.all([
-          getDoc(aiEmailRef),
-          getDoc(leadFinderRef),
-          getDoc(smartleadRef),
-          getDoc(userRef)
-        ])
+        // Get the AI email count from usage collection
+        const aiEmailCount = usageDoc.exists() ? usageDoc.data()?.aiEmailCount || 0 : 0
 
-        // Get all copy requests for this user
-        const copyRequestsQuery = query(copyRequestsRef, where('userId', '==', userData.uid))
-        const copyRequestsSnapshot = await getDocs(copyRequestsQuery)
-        const totalCopyRequests = copyRequestsSnapshot.size
+        // For now, we'll keep copyRequestsCount as 0 until you create that feature
+        setUsageData({
+          aiEmailCount: aiEmailCount,
+          copyRequestsCount: 0 // This will be updated when you implement copy requests
+        })
 
-        // Get user's plan from Users collection
-        const userPlan = userDoc.exists() ? userDoc.data()?.basicInfo?.plan || 'free' : 'free'
+        console.log('Usage data fetched:', {
+          aiEmailCount,
+          docExists: usageDoc.exists(),
+          docData: usageDoc.data()
+        })
 
-        const usageData: UsageData = {
-          aiEmailUsage: aiEmailDoc.exists() ? {
-            count: aiEmailDoc.data().count || 0,
-            lastResetDate: aiEmailDoc.data().lastResetDate?.toDate() || new Date(),
-            plan: aiEmailDoc.data().plan || userPlan,
-            totalLeads: aiEmailDoc.data().totalLeads || 0,
-            updatedAt: aiEmailDoc.data().updatedAt?.toDate() || new Date()
-          } : {
-            count: 0,
-            lastResetDate: new Date(),
-            plan: userPlan,
-            totalLeads: 0,
-            updatedAt: new Date()
-          },
-          leadFinder: leadFinderDoc.exists() ? {
-            count: leadFinderDoc.data().count || 0,
-            lastResetDate: leadFinderDoc.data().lastResetDate?.toDate() || new Date(),
-            lastUpdated: leadFinderDoc.data().lastUpdated?.toDate() || new Date(),
-            plan: leadFinderDoc.data().plan || userPlan,
-            totalLeads: leadFinderDoc.data().totalLeads || 0,
-            updatedAt: leadFinderDoc.data().updatedAt?.toDate() || new Date()
-          } : {
-            count: 0,
-            lastResetDate: new Date(),
-            lastUpdated: new Date(),
-            plan: userPlan,
-            totalLeads: 0,
-            updatedAt: new Date()
-          },
-          copyRequests: {
-            count: totalCopyRequests,
-            lastResetDate: new Date(),
-            plan: userPlan,
-            status: 'active',
-            totalLeads: 0,
-            updatedAt: new Date()
-          },
-          smartlead: smartleadDoc.exists() ? {
-            companyName: smartleadDoc.data().companyName || '',
-            email: smartleadDoc.data().email || '',
-            createdAt: smartleadDoc.data().createdAt?.toDate() || new Date()
-          } : {
-            companyName: '',
-            email: '',
-            createdAt: new Date()
-          }
-        }
-
-        setUsageData(usageData)
       } catch (error) {
         console.error('Error fetching usage data:', error)
       } finally {
@@ -236,28 +131,21 @@ export default function PortalPage() {
   const stats: StatCardProps[] = [
     {
       title: 'AI Email Usage',
-      value: usageData?.aiEmailUsage.count || 0,
+      value: usageData?.aiEmailCount || 0,
       icon: <Bot className="w-6 h-6" />,
-      description: `Last reset: ${usageData?.aiEmailUsage.lastResetDate.toLocaleDateString()}`,
-      status: (usageData?.aiEmailUsage.count || 0) > 80 ? 'warning' : 'success'
-    },
-    {
-      title: 'Lead Finder Usage',
-      value: usageData?.leadFinder.totalLeads || 0,
-      icon: <Users className="w-6 h-6" />,
-      description: `Total leads found`,
-      status: undefined
+      description: 'Total AI emails generated',
+      status: (usageData?.aiEmailCount || 0) > 80 ? 'warning' : 'success'
     },
     {
       title: 'Copy Requests',
-      value: usageData?.copyRequests.count || 0,
+      value: usageData?.copyRequestsCount || 0,
       icon: <FileText className="w-6 h-6" />,
-      description: `Total requests made`,
+      description: 'Total requests made',
       status: undefined
     },
     {
       title: 'Company Info',
-      value: typeof userData?.basicInfo?.companyName === 'string' ? 0 : userData?.basicInfo?.companyName || 0,
+      value: userData?.basicInfo?.companyName || 'Not Set',
       icon: <Activity className="w-6 h-6" />,
       description: `Email: ${userData?.basicInfo?.email || 'Not Set'}`,
       status: undefined
@@ -291,14 +179,13 @@ export default function PortalPage() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((stat, index) => (
           <StatCard key={index} {...stat} />
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        {/* Subscription Status */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -313,7 +200,7 @@ export default function PortalPage() {
                 <p className="text-xs text-gray-400">Active Subscription</p>
               </div>
               <span className="text-sm font-medium capitalize bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full">
-                {userData?.subscription?.planId || userData?.plan || 'Free'}
+                {userData?.plan === 'pro' ? 'Pro' : 'Free'}
               </span>
             </div>
           </div>

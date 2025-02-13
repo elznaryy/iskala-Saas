@@ -4,68 +4,61 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@/contexts/UserContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ExternalLink, Shield, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Shield, Loader2, Mail, Clock } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { db } from '@/lib/firebase/config'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { toast } from "@/components/ui/use-toast"
 import { hasSmartLeadAccess } from '@/lib/utils/planUtils'
 
-interface SmartleadCredentials {
-  apiKey: string
-  apiUrl: string
-  isVerified: boolean
+interface SmartleadRequest {
+  companyName: string
+  email: string
+  password: string
+  status: 'pending' | 'active'
+  submittedAt: any  // Firebase Timestamp
 }
 
+const SMARTLEAD_COLLECTION = 'smartlead'
+
 export default function IskalaEmailTool() {
-  const { userData, loading: userLoading } = useUser()
-  const [showPassword, setShowPassword] = useState(false)
+  const { userData } = useUser()
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [credentials, setCredentials] = useState<SmartleadCredentials>({
-    apiKey: '',
-    apiUrl: '',
-    isVerified: false
+  const [requestStatus, setRequestStatus] = useState<SmartleadRequest | null>(null)
+  const [formData, setFormData] = useState({
+    companyName: '',
+    email: '',
+    password: ''
   })
 
   useEffect(() => {
     if (userData?.uid) {
-      fetchCredentials()
+      checkRequestStatus()
     } else {
       setIsLoading(false)
     }
   }, [userData?.uid])
 
-  const fetchCredentials = async () => {
+  const checkRequestStatus = async () => {
     try {
       if (!userData?.uid) return
 
-      const docRef = doc(db, 'smartlead', userData.uid)
+      const docRef = doc(db, SMARTLEAD_COLLECTION, userData.uid)
       const docSnap = await getDoc(docRef)
 
       if (docSnap.exists()) {
-        const data = docSnap.data()
-        setCredentials({
-          apiKey: data.apiKey || '',
-          apiUrl: data.apiUrl || '',
-          isVerified: data.isVerified || false
-        })
+        setRequestStatus(docSnap.data() as SmartleadRequest)
       }
     } catch (error) {
-      console.error('Error fetching credentials:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to load SmartLead credentials',
-        variant: 'destructive'
-      })
+      console.error('Error checking request status:', error)
     } finally {
       setIsLoading(false)
     }
@@ -78,25 +71,39 @@ export default function IskalaEmailTool() {
     try {
       if (!userData?.uid) throw new Error('User not authenticated')
 
-      await setDoc(doc(db, 'smartlead', userData.uid), {
-        apiKey: credentials.apiKey,
-        apiUrl: credentials.apiUrl,
-        isVerified: true,
-        updatedAt: new Date()
-      })
+      // Ensure all required fields are present and valid
+      if (!formData.companyName.trim() || !formData.email.trim() || !formData.password.trim()) {
+        throw new Error('All fields are required')
+      }
 
+      const requestData = {
+        companyName: formData.companyName.trim(),
+        email: formData.email.trim(),
+        password: formData.password.trim(),
+        status: 'pending' as const,
+        submittedAt: serverTimestamp(),
+        userId: userData.uid
+      }
+
+      // Save to Firebase
+      await setDoc(doc(db, SMARTLEAD_COLLECTION, userData.uid), requestData)
+
+      setRequestStatus({
+        ...requestData,
+        submittedAt: new Date()
+      })
+      
       toast({
-        title: 'Success',
-        description: 'SmartLead credentials saved successfully',
+        title: 'Request Submitted Successfully',
+        description: 'Please check your email within 24 hours for your SmartLead account details.',
       })
 
-      setCredentials(prev => ({ ...prev, isVerified: true }))
       setShowForm(false)
     } catch (error) {
-      console.error('Error saving credentials:', error)
+      console.error('Error submitting request:', error)
       toast({
         title: 'Error',
-        description: 'Failed to save SmartLead credentials',
+        description: error instanceof Error ? error.message : 'Failed to submit request',
         variant: 'destructive'
       })
     } finally {
@@ -104,19 +111,16 @@ export default function IskalaEmailTool() {
     }
   }
 
-  const handleInputChange = (field: keyof SmartleadCredentials) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCredentials(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }))
-  }
-
-  if (userLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    )
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return ''
+    
+    // Handle both Firestore Timestamp and regular Date objects
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   if (!userData) {
@@ -135,7 +139,7 @@ export default function IskalaEmailTool() {
           Pro Feature
         </h2>
         <p className="text-gray-400 mb-4">
-          Upgrade to Pro to access SmartLead integration
+          Upgrade to Pro to access SmartLead
         </p>
         <Button
           onClick={() => window.location.href = '/portal?tab=billing'}
@@ -147,101 +151,112 @@ export default function IskalaEmailTool() {
     )
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-white">SmartLead Integration</h2>
-          <p className="text-gray-400 mt-1">Configure your SmartLead connection</p>
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         </div>
-      </div>
+      )
+    }
 
-      <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-        {credentials.isVerified ? (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Shield className="w-5 h-5 text-green-400" />
-              <span className="text-green-400">Connected to SmartLead</span>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-400">API Key</label>
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={credentials.apiKey}
-                  className="bg-gray-900 border-gray-700"
-                  disabled
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400">API URL</label>
-                <Input
-                  value={credentials.apiUrl}
-                  className="bg-gray-900 border-gray-700"
-                  disabled
-                />
-              </div>
-            </div>
+    if (requestStatus) {
+      return (
+        <div className="text-center py-12 space-y-4">
+          <Clock className="w-12 h-12 mx-auto text-blue-400" />
+          <h2 className="text-xl font-semibold text-white">Request Pending</h2>
+          <p className="text-gray-400 max-w-md mx-auto">
+            Your SmartLead account request is being processed. Please check your email 
+            ({requestStatus.email}) within 24 hours for your account details.
+          </p>
+          <p className="text-sm text-gray-500">
+            Submitted on: {formatDate(requestStatus.submittedAt)}
+          </p>
+        </div>
+      )
+    }
 
-            <Button
-              onClick={() => window.open('https://app.smartlead.ai', '_blank')}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open SmartLead Dashboard
-            </Button>
+    return (
+      <div className="max-w-md mx-auto py-12">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Request SmartLead Account</h2>
+          <p className="text-gray-400">
+            Fill in your details to get your SmartLead account
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">
+              Company Name
+            </label>
+            <Input
+              type="text"
+              value={formData.companyName}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                companyName: e.target.value
+              }))}
+              className="bg-gray-800 border-gray-700"
+              required
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400">API Key</label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={credentials.apiKey}
-                  onChange={handleInputChange('apiKey')}
-                  className="bg-gray-900 border-gray-700 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
 
-            <div>
-              <label className="text-sm text-gray-400">API URL</label>
-              <Input
-                type="url"
-                value={credentials.apiUrl}
-                onChange={handleInputChange('apiUrl')}
-                className="bg-gray-900 border-gray-700"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">
+              Email Address
+            </label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                email: e.target.value
+              }))}
+              className="bg-gray-800 border-gray-700"
+              required
+            />
+          </div>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                'Connect SmartLead'
-              )}
-            </Button>
-          </form>
-        )}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">
+              Password
+            </label>
+            <Input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                password: e.target.value
+              }))}
+              className="bg-gray-800 border-gray-700"
+              required
+              minLength={8}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Submitting...
+              </>
+            ) : (
+              'Submit Request'
+            )}
+          </Button>
+        </form>
       </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4">
+      {renderContent()}
     </div>
   )
 }

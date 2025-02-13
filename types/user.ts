@@ -3,14 +3,13 @@ export interface UserBasicInfo {
   email: string
   companyName: string
   phoneNumber: string
-  photoURL?: string
 }
 
 export interface UserData {
   uid: string
   email: string
+  name: string
   basicInfo: UserBasicInfo
-  photoURL?: string
   plan: 'free' | 'pro'
   subscription?: {
     status: string

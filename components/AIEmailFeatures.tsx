@@ -92,7 +92,7 @@ export default function AIEmailFeatures() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Link href="/ai-email-strategy">
+              <Link href="/portal/ai-email">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors duration-300">
                   Try AI Assistant Now
                 </Button>
@@ -138,7 +138,7 @@ export default function AIEmailFeatures() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Link href="/ai-email-strategy">
+                <Link href="/portal/ai-email">
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors duration-300">
                     Start Generating Email Copy
                   </Button>

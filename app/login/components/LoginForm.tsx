@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { signIn, signOut } from '@/lib/firebase/auth'
 import { getUserData } from '@/lib/firebase/db'
@@ -27,7 +27,6 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       router.replace('/portal')
@@ -40,59 +39,64 @@ export default function LoginForm() {
     setError('')
 
     try {
-      console.log('Starting login process...')
       const { user: authUser, error: signInError } = await signIn(formData.email, formData.password)
       
       if (signInError) {
-        throw new Error(signInError)
+        let errorMessage = 'Invalid email or password'
+        
+        switch (signInError.code) {
+          case 'auth/invalid-credential':
+          case 'auth/wrong-password':
+          case 'auth/user-not-found':
+            errorMessage = 'Invalid email or password'
+            break
+          case 'auth/invalid-email':
+            errorMessage = 'Invalid email format'
+            break
+          case 'auth/too-many-requests':
+            errorMessage = 'Too many attempts. Please try again later'
+            break
+          default:
+            errorMessage = 'An error occurred during login'
+        }
+        
+        setError(errorMessage)
+        toast.error(errorMessage)
+        return
       }
 
       if (!authUser) {
         throw new Error('Authentication failed')
       }
 
-      const { data, error: dbError } = await getUserData(authUser.uid)
-      
-      if (dbError) {
-        console.error('Database error:', dbError)
-        toast.error('Error accessing user data')
-        setError('Error accessing user data. Please try again.')
+      const { data: userData, error: dbError } = await getUserData(authUser.uid)
+
+      if (!userData || dbError) {
+        await signOut()
+        setError('Account not found. Please sign up or contact support.')
+        toast.error('Account not found')
         return
       }
 
-      if (!data) {
-        toast.error('User data not found')
-        setError('User data not found. Please contact support.')
+      if (!userData.basicInfo || !userData.plan) {
+        await signOut()
+        setError('Account setup incomplete. Please sign up again.')
+        toast.error('Account setup incomplete')
         return
       }
 
       toast.success('Login successful!')
       
-      // Let the useEffect handle the redirect
-      // The auth state change will trigger the redirect
+      router.push('/portal')
+      setTimeout(() => {
+        window.location.href = '/portal'
+      }, 100)
+
     } catch (error: any) {
       console.error('Login error:', error)
-      let errorMessage = 'An error occurred during login'
-      
-      switch (error.code) {
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email address'
-          break
-        case 'auth/user-disabled':
-          errorMessage = 'This account has been disabled'
-          break
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email'
-          break
-        case 'auth/wrong-password':
-          errorMessage = 'Incorrect password'
-          break
-        default:
-          errorMessage = error.message || 'Failed to sign in'
-      }
-      
-      toast.error(errorMessage)
+      const errorMessage = 'Invalid email or password'
       setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -104,6 +108,8 @@ export default function LoginForm() {
       ...prev,
       [name]: value
     }))
+    // Clear error when user starts typing
+    if (error) setError('')
   }
 
   return (
@@ -114,6 +120,16 @@ export default function LoginForm() {
         transition={{ duration: 0.5 }}
         className="max-w-md w-full space-y-8 bg-white/5 backdrop-blur-sm p-8 rounded-xl"
       >
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          className="text-gray-400 hover:text-white flex items-center"
+          onClick={() => router.push('/')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Home
+        </Button>
+
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Sign in to your account
@@ -129,7 +145,14 @@ export default function LoginForm() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500 rounded-lg p-3">
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
               <input

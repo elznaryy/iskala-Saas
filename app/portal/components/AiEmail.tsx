@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Bot, User, Sparkles, Loader2, AlertCircle, PlusCircle, Shield } from 'lucide-react'
+import { Send, Bot, User, Sparkles, Loader2, AlertCircle, PlusCircle, Shield, FileDown } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
 import { db } from '@/lib/firebase/config'
 import { 
@@ -41,6 +41,7 @@ interface FirestoreUsageData {
 }
 
 const FLOWISE_API_URL = "https://iskala.app.flowiseai.com/api/v1/prediction/73f6495e-b399-4898-93d0-a2ae9b01ca83"
+const MAX_MESSAGES = 20
 
 const getRemainingEmails = (currentUsage: number, plan: PlanType): number => {
   const limit = PLAN_LIMITS[plan].aiEmailLimit
@@ -117,7 +118,7 @@ export default function AiEmail() {
     setMessages([])
     setShowIntro(false)
     setShowChatStarter(false)
-    sendMessage("Generate email strategy")
+    sendMessage("Generate email copy")
   }
 
   const incrementUsage = async () => {
@@ -147,7 +148,16 @@ export default function AiEmail() {
   }
 
   const sendMessage = async (message = input) => {
-    if (!input.trim() || isLoading) return
+    if (isLoading) return
+
+    if (messages.length >= MAX_MESSAGES) {
+      toast({
+        title: 'Session Limit Reached',
+        description: 'You\'ve reached the maximum messages for this session. Please start a new chat.',
+        variant: 'destructive'
+      })
+      return
+    }
 
     if (usageData && userData) {
       const limit = PLAN_LIMITS[userData.plan].aiEmailLimit
@@ -162,33 +172,64 @@ export default function AiEmail() {
     }
 
     setIsLoading(true)
-    const userMessage = input.trim()
+    const userMessage = message.trim()
     setInput('')
     
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    const limitedMessages = messages.slice(-MAX_MESSAGES)
+    setMessages([...limitedMessages, { role: 'user', content: userMessage }])
 
     try {
+      // Format conversation history for the AI
+      const conversationContext = limitedMessages
+        .map(msg => `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`)
+        .join('\n\n')
+
+      // Create the full prompt with history
+      const fullPrompt = conversationContext 
+        ? `Previous conversation:\n${conversationContext}\n\nHuman: ${userMessage}\nAssistant:`
+        : userMessage
+
       const response = await fetch(FLOWISE_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: userMessage })
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          question: fullPrompt,
+          // Send the messages array as well for reference
+          history: limitedMessages.map(msg => ({
+            role: msg.role === 'user' ? 'Human' : 'Assistant',
+            content: msg.content
+          }))
+        })
       })
 
-      if (!response.ok) throw new Error('Failed to get response')
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
 
       const data = await response.json()
       
-      setMessages(prev => [...prev, { role: 'assistant', content: data.text }])
+      if (!data.text) {
+        throw new Error('Invalid response format from AI')
+      }
+
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.text 
+      }])
       
       await incrementUsage()
 
     } catch (error) {
-      console.error('Error:', error)
+      console.error('AI Service Error:', error)
       toast({
         title: 'Error',
-        description: 'Failed to get response. Please try again.',
+        description: 'Failed to get AI response. Please try again.',
         variant: 'destructive'
       })
+      
+      setMessages(prev => prev.slice(0, -1))
     } finally {
       setIsLoading(false)
     }
@@ -198,6 +239,49 @@ export default function AiEmail() {
     e.preventDefault()
     if (!input.trim()) return
     await sendMessage()
+  }
+
+  const exportChat = () => {
+    if (messages.length === 0) {
+      toast({
+        title: 'Nothing to Export',
+        description: 'Start a conversation first before exporting.',
+        variant: 'default'
+      })
+      return
+    }
+
+    try {
+      const formattedChat = messages.map(msg => 
+        `${msg.role.toUpperCase()}: ${msg.content}`
+      ).join('\n\n')
+
+      const timestamp = new Date().toISOString().split('T')[0]
+      const fileName = `email-conversation-${timestamp}.txt`
+
+      const blob = new Blob([formattedChat], { type: 'text/plain' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title: 'Conversation Exported',
+        description: 'Your chat has been saved successfully.',
+        variant: 'default'
+      })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to export conversation.',
+        variant: 'destructive'
+      })
+    }
   }
 
   if (userLoading) {
@@ -255,7 +339,20 @@ export default function AiEmail() {
               <PlusCircle className="w-4 h-4 mr-2" />
               New Chat
             </Button>
+            {messages.length > 0 && (
+              <Button
+                onClick={exportChat}
+                variant="outline"
+                className="border-gray-700 hover:bg-gray-800"
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Export Chat
+              </Button>
+            )}
           </div>
+          <span className="text-sm text-gray-400">
+            {messages.length}/{MAX_MESSAGES} messages
+          </span>
         </div>
 
         <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
@@ -326,8 +423,8 @@ export default function AiEmail() {
                       className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-6 h-auto flex flex-col items-center gap-2"
                     >
                       <Sparkles className="w-6 h-6" />
-                      <span className="text-lg">Generate Email Strategy</span>
-                      <span className="text-sm text-blue-200">Get strategic email marketing advice</span>
+                      <span className="text-lg">Generate Email Copy</span>
+                      <span className="text-sm text-blue-200">Get AI-powered email copy</span>
                     </Button>
                   </div>
                 </div>
@@ -408,9 +505,18 @@ export default function AiEmail() {
             <DialogTitle>Start New Chat?</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-gray-300">
-              Starting a new chat will clear your current conversation. Do you want to continue?
+            <p className="text-gray-300 mb-4">
+              Starting a new chat will clear your current conversation. Would you like to export this conversation first?
             </p>
+            <div className="flex flex-col space-y-2">
+              <Button
+                onClick={exportChat}
+                className="bg-gray-800 hover:bg-gray-700 text-white"
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Export Conversation
+              </Button>
+            </div>
           </div>
           <DialogFooter className="flex space-x-2">
             <Button

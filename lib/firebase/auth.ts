@@ -4,7 +4,8 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  User
+  User,
+  Auth
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { UserData } from '@/types/subscription';
@@ -60,9 +61,11 @@ export const signUp = async (
   }
 };
 
-export const signIn = async (email: string, password: string) => {
+export async function signIn(email: string, password: string) {
   try {
+    console.log('Starting Firebase authentication...')
     const userCredential = await signInWithEmailAndPassword(auth, email, password)
+    console.log('Authentication successful:', userCredential.user.uid)
     
     // Get and set the auth token
     const token = await userCredential.user.getIdToken()
@@ -70,19 +73,17 @@ export const signIn = async (email: string, password: string) => {
     
     return { user: userCredential.user, error: null }
   } catch (error: any) {
-    console.error('Error in signIn:', error)
-    return { user: null, error: error.message }
+    console.error('Authentication error:', error)
+    return { user: null, error }
   }
 }
 
-export const signOut = async () => {
+export async function signOut() {
   try {
     await firebaseSignOut(auth)
-    // Clear the auth cookie
-    document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-  } catch (error) {
-    console.error('Error in signOut:', error)
-    throw error
+    return { error: null }
+  } catch (error: any) {
+    return { error }
   }
 }
 

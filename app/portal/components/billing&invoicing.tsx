@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { useUser } from '@/contexts/UserContext'
-import { Check, Mail } from 'lucide-react'
+import { Check, Mail, Crown } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -16,17 +16,20 @@ import {
 import { PLAN_LIMITS } from '@/types/subscription'
 import { toast } from "@/components/ui/use-toast"
 
-export default function BillingAndInvoicing() {
-  const { userData } = useUser()
-  const [showContactDialog, setShowContactDialog] = useState(false)
-
-  const features = {
-    free: [
+const PLANS = {
+  free: {
+    name: 'Free Plan',
+    price: 0,
+    features: [
       `${PLAN_LIMITS.free.aiEmailLimit} AI emails per month`,
       'Basic email templates',
       'Community support',
-    ],
-    pro: [
+    ]
+  },
+  pro: {
+    name: 'Pro Plan',
+    price: 100,
+    features: [
       `${PLAN_LIMITS.pro.aiEmailLimit} AI emails per month`,
       'Advanced email templates',
       'Priority support',
@@ -35,6 +38,13 @@ export default function BillingAndInvoicing() {
       'Custom features'
     ]
   }
+}
+
+export default function BillingAndInvoicing() {
+  const { userData } = useUser()
+  const [showContactDialog, setShowContactDialog] = useState(false)
+  
+  const currentPlan = userData?.plan || 'free'
 
   const handleUpgradeClick = () => {
     setShowContactDialog(true)
@@ -63,47 +73,87 @@ export default function BillingAndInvoicing() {
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Free Plan Card */}
-          <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-            <h2 className="text-xl font-semibold text-white mb-2">Free Plan</h2>
-            <p className="text-3xl font-bold text-white mb-6">$0<span className="text-sm font-normal text-gray-400">/month</span></p>
-            
-            <ul className="space-y-3 mb-6">
-              {features.free.map((feature, index) => (
-                <li key={index} className="flex items-center text-gray-300">
-                  <Check className="w-5 h-5 mr-2 text-green-500" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
+          <div className={`${currentPlan === 'free' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-900/30 border-gray-800'} rounded-lg p-6 border relative`}>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold text-white mb-2">Free Plan</h2>
+                <p className="text-3xl font-bold text-white">
+                  ${PLANS.free.price}
+                  <span className="text-sm font-normal text-gray-400">/month</span>
+                </p>
+              </div>
+              
+              <ul className="space-y-3">
+                {PLANS.free.features.map((feature, index) => (
+                  <li key={index} className="flex items-center text-gray-300">
+                    <Check className="w-5 h-5 mr-2 text-green-500" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
 
-            <Button
-              className="w-full bg-gray-700 hover:bg-gray-600"
-              disabled
-            >
-              Current Plan
-            </Button>
+              {currentPlan === 'free' ? (
+                <Button
+                  className="w-full bg-gray-700 hover:bg-gray-600"
+                  disabled
+                >
+                  Current Plan
+                </Button>
+              ) : (
+                <Button
+                  className="w-full bg-gray-700 hover:bg-gray-600"
+                  onClick={handleContactSupport}
+                >
+                  Downgrade to Free
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Pro Plan Card */}
-          <div className="bg-blue-900/20 rounded-lg p-6 border border-blue-500/30">
-            <h2 className="text-xl font-semibold text-white mb-2">Pro Plan</h2>
-            <p className="text-3xl font-bold text-white mb-6">Contact Us<span className="text-sm font-normal text-gray-400">/month</span></p>
-            
-            <ul className="space-y-3 mb-6">
-              {features.pro.map((feature, index) => (
-                <li key={index} className="flex items-center text-gray-300">
-                  <Check className="w-5 h-5 mr-2 text-blue-500" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
+          <div className={`${currentPlan === 'pro' ? 'bg-blue-900/20 border-blue-500/30' : 'bg-blue-900/10 border-blue-500/20'} rounded-lg p-6 border relative`}>
+            {currentPlan === 'pro' && (
+              <div className="absolute -top-3 -right-3">
+                <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full flex items-center">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Current
+                </span>
+              </div>
+            )}
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold text-white mb-2">Pro Plan</h2>
+                <p className="text-3xl font-bold text-white">
+                  ${PLANS.pro.price}
+                  <span className="text-sm font-normal text-gray-400">/month</span>
+                </p>
+              </div>
+              
+              <ul className="space-y-3">
+                {PLANS.pro.features.map((feature, index) => (
+                  <li key={index} className="flex items-center text-gray-300">
+                    <Check className="w-5 h-5 mr-2 text-blue-500" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
 
-            <Button
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={handleUpgradeClick}
-            >
-              Upgrade to Pro
-            </Button>
+              {currentPlan === 'pro' ? (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  disabled
+                >
+                  Current Plan
+                </Button>
+              ) : (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={handleUpgradeClick}
+                >
+                  Upgrade to Pro
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -111,9 +161,9 @@ export default function BillingAndInvoicing() {
         <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Contact Support for Upgrade</DialogTitle>
+              <DialogTitle>Upgrade to Pro Plan</DialogTitle>
               <DialogDescription>
-                To upgrade to our Pro plan, please contact our support team. We'll help you with the upgrade process and answer any questions you may have.
+                Ready to upgrade to Pro? Contact our support team to get started. The Pro plan is ${PLANS.pro.price}/month.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">

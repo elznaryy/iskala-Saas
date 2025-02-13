@@ -54,19 +54,19 @@ const providers: Provider[] = [
     name: 'Google Provider',
     poweredBy: 'Powered by InboxAutomate',
     icon: <GmailIcon className="w-8 h-8 text-blue-400" />,
-    href: 'https://google-provider-url.com'
+    href: 'https://inboxautomate.com/'
   },
   {
     name: 'Outlook Provider',
     poweredBy: 'Powered by Infrainbox',
     icon: <OutlookIcon className="w-8 h-8 text-blue-400" />,
-    href: 'https://outlook-provider-url.com'
+    href: 'https://www.infrainbox.io/'
   },
   {
     name: 'SMTP Provider',
     poweredBy: 'Powered by Mailreef',
     icon: <SmtpIcon className="w-8 h-8 text-blue-400" />,
-    href: 'https://smtp-provider-url.com'
+    href: 'https://www.mailreef.com/'
   }
 ]
 

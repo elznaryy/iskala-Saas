@@ -4,38 +4,39 @@ import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { PLAN_LIMITS } from '@/types/subscription'
 
 const plans = [
   {
     name: "Free Plan",
     price: "$0",
     features: [
-      "100 leads per month",
-      "Basic email automation",
-      "Email support",
-      "Iskala university access",
-      "Community access"
+      `${PLAN_LIMITS.free.aiEmailLimit} AI emails per month`,
+      'Basic email templates',
+      'Community support',
+      'Basic email automation',
+      'Iskala university access'
     ]
   },
   {
     name: "Pro Plan",
     price: "$100",
     features: [
-      "1K leads per month",
-      "AI email Copy & Strategy",
-      "Advanced email automation",
-      "Priority support",
-      "Email infrastructure Audit",
-      "Iskala university access",
-      "Community access",
-      "Custom integrations"
+      `${PLAN_LIMITS.pro.aiEmailLimit} AI emails per month`,
+      'Advanced email templates',
+      'Priority support',
+      'SmartLead integration',
+      'Advanced analytics',
+      'Advanced email automation',
+      'Iskala university access',
+      'Custom features'
     ]
   },
   {
     name: "Enterprise Plan",
     price: "Custom",
     features: [
-      "Unlimited leads",
+      "Unlimited AI emails",
       "All Pro plan features",
       "Dedicated account manager",
       "Custom solutions",
@@ -85,7 +86,7 @@ export default function Pricing() {
             viewport={{ once: true }}
             className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto"
           >
-            Choose the plan that best fits your needs. All plans come with a 14-day free trial.
+            Choose the plan that best fits your needs. Start with our free plan or upgrade for more features.
           </motion.p>
         </div>
 
@@ -97,8 +98,17 @@ export default function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200"
+              className={`relative bg-white border rounded-lg shadow-sm divide-y divide-gray-200 ${
+                index === 1 ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-20' : 'border-gray-200'
+              }`}
             >
+              {index === 1 && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-blue-500 text-white text-sm px-3 py-1 rounded-full">
+                    Most Popular
+                  </span>
+                </div>
+              )}
               <div className="p-6">
                 <h3 className="text-lg font-medium text-gray-900">{plan.name}</h3>
                 <p className="mt-4 text-3xl font-extrabold text-gray-900">{plan.price}</p>
@@ -115,7 +125,7 @@ export default function Pricing() {
                 </Button>
               </div>
               <div className="pt-6 pb-8 px-6">
-                <h4 className="text-sm font-medium text-gray-900 tracking-wide uppercase">Whats included</h4>
+                <h4 className="text-sm font-medium text-gray-900 tracking-wide uppercase">What's included</h4>
                 <ul className="mt-6 space-y-4">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex space-x-3">

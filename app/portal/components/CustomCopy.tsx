@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { 
   Search, 
   Mail, 
@@ -9,7 +9,8 @@ import {
   Sparkles,
   Variable,
   Copy,
-  Lock
+  Lock,
+  X
 } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -27,6 +28,13 @@ import { collection, getDocs } from 'firebase/firestore'
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 
 // Types
 interface EmailTemplate {
@@ -46,6 +54,15 @@ interface EmailTemplate {
   updatedAt: Date
 }
 
+// Add new interfaces for filtering
+interface FilterOptions {
+  industry: string | 'all'
+  location: string | 'all'
+  type: 'all' | 'free' | 'premium'
+  platform: 'all' | 'smartlead' | 'linkedin'
+  sortBy: 'score' | 'replyRate' | 'date'
+}
+
 export default function CustomCopy() {
   const { userData } = useUser()
   const [searchQuery, setSearchQuery] = useState('')
@@ -53,6 +70,16 @@ export default function CustomCopy() {
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
   const [showTemplateDialog, setShowTemplateDialog] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [filters, setFilters] = useState<FilterOptions>({
+    industry: 'all',
+    location: 'all',
+    type: 'all',
+    platform: 'all',
+    sortBy: 'score'
+  })
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const ITEMS_PER_PAGE = 9
 
   useEffect(() => {
     fetchTemplates()
@@ -114,12 +141,58 @@ export default function CustomCopy() {
     }
   }
 
-  const filteredTemplates = templates.filter(template =>
-    template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    template.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    template.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    template.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Get unique industries and locations for filter dropdowns
+  const industries = useMemo(() => 
+    [...new Set(templates.map(t => t.industry))],
+    [templates]
   )
+  
+  const locations = useMemo(() => 
+    [...new Set(templates.map(t => t.location))],
+    [templates]
+  )
+
+  // Enhanced filtering with multiple criteria
+  const filteredTemplates = useMemo(() => {
+    return templates.filter(template => {
+      const matchesSearch = 
+        template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+
+      const matchesIndustry = 
+        filters.industry === 'all' || template.industry === filters.industry
+
+      const matchesLocation = 
+        filters.location === 'all' || template.location === filters.location
+
+      const matchesType = 
+        filters.type === 'all' || template.type === filters.type
+
+      const matchesPlatform = 
+        filters.platform === 'all' || template.platform === filters.platform
+
+      return matchesSearch && matchesIndustry && matchesLocation && 
+             matchesType && matchesPlatform
+    }).sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'score':
+          return b.score - a.score
+        case 'replyRate':
+          return b.replyRate - a.replyRate
+        case 'date':
+          return b.createdAt.getTime() - a.createdAt.getTime()
+        default:
+          return 0
+      }
+    })
+  }, [templates, searchQuery, filters])
+
+  // Pagination
+  const paginatedTemplates = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE
+    return filteredTemplates.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredTemplates, page])
 
   if (isLoading) {
     return (
@@ -136,19 +209,95 @@ export default function CustomCopy() {
       </div>
 
       <div className="space-y-6">
-        <div className="relative max-w-md">
-          <Input
-            type="search"
-            placeholder="Search templates..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+        {/* Enhanced Search and Filter Section */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Input
+              type="search"
+              placeholder="Search templates..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+          </div>
+
+          <Select
+            value={filters.industry}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, industry: value }))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Industry" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Industries</SelectItem>
+              {industries.map(industry => (
+                <SelectItem key={industry} value={industry}>
+                  {industry}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.location}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, location: value }))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {locations.map(location => (
+                <SelectItem key={location} value={location}>
+                  {location}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.sortBy}
+            onValueChange={(value) => setFilters(prev => ({ 
+              ...prev, 
+              sortBy: value as FilterOptions['sortBy']
+            }))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort By" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="score">Score</SelectItem>
+              <SelectItem value="replyRate">Reply Rate</SelectItem>
+              <SelectItem value="date">Date</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Active Filters Display */}
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(filters).map(([key, value]) => {
+            if (value && value !== 'all') {
+              return (
+                <Badge 
+                  key={key}
+                  variant="secondary"
+                  className="px-3 py-1"
+                >
+                  {key}: {value}
+                  <X 
+                    className="ml-2 h-4 w-4 cursor-pointer" 
+                    onClick={() => setFilters(prev => ({ ...prev, [key]: '' }))}
+                  />
+                </Badge>
+              )
+            }
+            return null
+          })}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTemplates.map(template => (
+          {paginatedTemplates.map(template => (
             <Card 
               key={template.id} 
               className={cn(
@@ -252,6 +401,29 @@ export default function CustomCopy() {
             </Card>
           ))}
         </div>
+
+        {/* Pagination */}
+        {filteredTemplates.length > ITEMS_PER_PAGE && (
+          <div className="flex justify-center gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="flex items-center px-4">
+              Page {page} of {Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE)}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => p + 1)}
+              disabled={page >= Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
 
         <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
           <DialogContent className="sm:max-w-[600px]">
