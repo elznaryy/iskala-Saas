@@ -9,7 +9,7 @@ const testimonials = [
     quote: "We're impressed with the response rate; unlike typical outbound campaigns, our emails seemed personalized. Additionally, we closed a deal within just two weeks of partnering with Iskala. Kudos to the team!",
     author: "Helen",
     position: "Lead Generation Manager, ZenHr",
-    image: "/images/Helen.jpg"
+    image: "/images/helen.jpg"
   },
   {
     quote: "Despite real estate being new for Iskala, their efforts resulted in 50+ meetings, high-quality leads, and four major clients closed, exceeding the initial investment.",
