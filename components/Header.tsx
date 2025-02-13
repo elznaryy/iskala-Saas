@@ -23,11 +23,11 @@ export default function Header() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <Image
-                src="/images/Asset2.png"
+                src="/images/Asset4.png"
                 alt="iSkala Logo"
                 width={400}
                 height={133}
-                className="w-auto h-8 sm:h-12 md:h-16 lg:h-20"
+                className="w-auto h-12 sm:h-16 md:h-20 lg:h-24"
                 priority
                 unoptimized
               />
