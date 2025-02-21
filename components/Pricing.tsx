@@ -25,11 +25,15 @@ const plans = [
       `${PLAN_LIMITS.pro.aiEmailLimit} AI emails per month`,
       'Advanced email templates',
       'Priority support',
-      'SmartLead integration',
-      'Advanced analytics',
-      'Advanced email automation',
-      'Iskala university access',
-      'Custom features'
+      'Recorded Masterclass on end-to-end frameworks',
+      'Free SmartLead demo account',
+      'Middle East database (100K e-commerce stores)',
+      'Middle East database (All funded businesses directory)',
+      'Exclusive community access',
+      'AI-powered cold email copy generator',
+      'All campaign templates',
+      'Weekly expert sessions',
+      '2,000 customized prospects list tailored to your ICP'
     ]
   },
   {

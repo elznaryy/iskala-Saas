@@ -1,6 +1,6 @@
 'use client'
 
-import { Menu, Bell, LogOut, User, Settings } from 'lucide-react'
+import { Menu, Bell, LogOut, User } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useUser } from '@/contexts/UserContext'
 import { signOut } from '@/lib/firebase/auth'
@@ -99,15 +99,9 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem asChild>
-                  <Link href="/portal?tab=profile" className="flex items-center">
+                  <Link href="/portal/profile" className="flex items-center">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/portal?tab=settings" className="flex items-center">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

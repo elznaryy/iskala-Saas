@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { db, auth } from '@/lib/firebase/config'
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
@@ -16,10 +16,13 @@ import {
   LogOut,
   Shield,
   Database,
-  LineChart
+  LineChart,
+  Search,
+  ChevronDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/firebase/auth'
+import type { LucideIcon } from 'lucide-react'
 
 export default function AdminLayout({
   children,
@@ -27,11 +30,13 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const { userData, loading: userLoading } = useUser()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [adminData, setAdminData] = useState<any>(null)
   const [adminUsers, setAdminUsers] = useState<string[]>([])
+  const [openGroups, setOpenGroups] = useState<string[]>([])
 
   // First effect: Check auth state directly
   useEffect(() => {
@@ -112,6 +117,14 @@ export default function AdminLayout({
     }
   }
 
+  const toggleGroup = (groupId: string) => {
+    if (openGroups.includes(groupId)) {
+      setOpenGroups(openGroups.filter((group) => group !== groupId))
+    } else {
+      setOpenGroups([...openGroups, groupId])
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
@@ -126,7 +139,7 @@ export default function AdminLayout({
     return null
   }
 
-  const navigationItems = [
+  const navigationItems: NavItem[] = [
     {
       name: 'Dashboard',
       icon: BarChart3,
@@ -148,10 +161,23 @@ export default function AdminLayout({
     {
       name: 'Lead Finder',
       icon: Database,
-      href: '/admin/leads',
-      id: 'leads'
+      href: '#',
+      id: 'leads',
+      children: [
+        {
+          id: 'lead-search',
+          name: 'Search',
+          icon: Search,
+          href: '/admin/leads'
+        },
+        {
+          id: 'customized-prospects',
+          name: 'Customized Prospects',
+          icon: Users,
+          href: '/admin/customized-prospects'
+        }
+      ]
     },
-    
     {
       name: 'Support Requests',
       icon: MessageSquare,
@@ -164,13 +190,66 @@ export default function AdminLayout({
       href: '/admin/email-templates',
       id: 'email-templates'
     },
-   /* {
-      name: 'Settings',
-      icon: Settings,
-      href: '/admin/settings',
-      id: 'settings'
-    }*/
   ]
+
+  const renderNavItem = (item: NavItem) => {
+    const isActive = pathname === item.href
+    const hasChildren = item.children && item.children.length > 0
+    const isOpen = openGroups.includes(item.id)
+
+    if (hasChildren) {
+      return (
+        <div key={item.id}>
+          <button
+            onClick={() => toggleGroup(item.id)}
+            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors ${
+              isOpen ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              <item.icon className="w-5 h-5" />
+              <span>{item.name}</span>
+            </div>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {isOpen && item.children && (
+            <div className="mt-1 ml-4 space-y-1">
+              {item.children.map((child) => (
+                <button
+                  key={child.id}
+                  onClick={() => handleNavigation(child.href, child.id)}
+                  className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors ${
+                    pathname === child.href
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  <child.icon className="w-4 h-4" />
+                  <span>{child.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <button
+        key={item.id}
+        onClick={() => handleNavigation(item.href, item.id)}
+        className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors ${
+          isActive
+            ? 'bg-blue-600 text-white'
+            : 'text-gray-400 hover:text-white hover:bg-gray-700'
+        }`}
+      >
+        <item.icon className="w-5 h-5" />
+        <span>{item.name}</span>
+      </button>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -194,21 +273,7 @@ export default function AdminLayout({
       <div className="fixed left-0 top-16 bottom-0 w-64 bg-gray-800 border-r border-gray-700">
         <nav className="p-4">
           <ul className="space-y-2">
-            {navigationItems.map((item) => (
-              <li key={item.id}>
-                <button
-                  onClick={() => handleNavigation(item.href, item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors ${
-                    activeTab === item.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.name}</span>
-                </button>
-              </li>
-            ))}
+            {navigationItems.map((item) => renderNavItem(item))}
           </ul>
         </nav>
       </div>
@@ -221,4 +286,17 @@ export default function AdminLayout({
       </div>
     </div>
   )
+}
+
+interface NavItem {
+  name: string
+  icon: LucideIcon
+  href: string
+  id: string
+  children?: Array<{
+    id: string
+    name: string
+    icon: LucideIcon
+    href: string
+  }>
 } 

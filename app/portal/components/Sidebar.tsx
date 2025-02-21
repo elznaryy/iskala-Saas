@@ -17,10 +17,23 @@ import {
   ChevronDown,
   Sparkles,
   MessageSquare,
-  Settings2
+  Settings2,
+  Database
 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from 'framer-motion'
+
+declare global {
+  interface Window {
+    $zoho: {
+      salesiq: {
+        floatwindow: {
+          visible: (action: 'show' | 'hide') => void
+        }
+      }
+    }
+  }
+}
 
 interface SidebarProps {
   onClose: () => void
@@ -63,7 +76,21 @@ export default function Sidebar({ onClose }: SidebarProps) {
       id: 'lead-finder',
       name: 'Lead Finder',
       icon: <Search className="w-5 h-5" />,
-      href: '/portal/lead-finder'
+      href: '#',
+      children: [
+        {
+          id: 'lead-search',
+          name: 'Search',
+          icon: <Users className="w-4 h-4" />,
+          href: '/portal/lead-finder'
+        },
+        {
+          id: 'customized-prospects',
+          name: 'Customized Prospects',
+          icon: <Database className="w-4 h-4" />,
+          href: '/portal/customized-prospects'
+        }
+      ]
     },
     {
       id: 'email-accounts',
@@ -73,9 +100,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
     },
     {
       id: 'iskala-university',
-      name: 'iSkala University',
-      icon: <GraduationCap className="w-5 h-5" />,
-      href: '/portal/university'
+      name: 'SmartLead',
+      icon: <MessageSquare className="w-5 h-5" />,
+      href: '/portal/email-tool'
     },
     {
       id: 'iskala-community',
@@ -85,9 +112,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
     },
     {
       id: 'iskala-email',
-      name: 'SmartLead',
-      icon: <MessageSquare className="w-5 h-5" />,
-      href: '/portal/email-tool'
+      name: 'iSkala University',
+      icon: <GraduationCap className="w-5 h-5" />,
+      href: '/portal/university'
     },
     {
       id: 'settings',
@@ -180,6 +207,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
     )
   }
 
+  const openZohoChat = () => {
+    if (typeof window !== 'undefined' && window.$zoho && window.$zoho.salesiq) {
+      window.$zoho.salesiq.floatwindow.visible('show')
+    }
+  }
+
   return (
     <div className="h-full flex flex-col bg-gray-800/95 backdrop-blur-sm">
       <motion.div 
@@ -207,7 +240,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="flex items-center space-x-2 px-3 py-2 text-xs text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 cursor-pointer">
+        <div 
+          onClick={openZohoChat}
+          className="flex items-center space-x-2 px-3 py-2 text-xs text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 cursor-pointer"
+        >
           <Users className="w-4 h-4" />
           <span>Need help? Contact support</span>
         </div>
