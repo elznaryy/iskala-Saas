@@ -51,7 +51,8 @@ import {
   Variable,
   Crown,
   Users,
-  Info
+  Info,
+  Search
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { db } from '@/lib/firebase/config'
@@ -111,6 +112,7 @@ export default function EmailTemplatesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterType, setFilterType] = useState('all')
 
   useEffect(() => {
     fetchTemplates()
@@ -221,243 +223,272 @@ export default function EmailTemplatesPage() {
   )
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Email Templates</h1>
-          <p className="text-gray-500">Manage your email templates library</p>
-        </div>
+    <div className="container mx-auto p-6">
+      {/* Header Section */}
+      <div className="space-y-6 mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
+              Email Templates
+            </h1>
+            <p className="text-gray-400 mt-1">Manage your email templates library</p>
+          </div>
 
-        {/* Add Template Button */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg" className="gap-2" variant="default">
-              <Plus className="h-5 w-5" />
-              Add Template
-            </Button>
-          </DialogTrigger>
-          
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingId ? 'Edit Template' : 'Add New Template'}</DialogTitle>
-              <DialogDescription>
-                Fill in the template details below
-              </DialogDescription>
-            </DialogHeader>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl gap-2"
+              >
+                <Plus className="h-5 w-5" />
+                Add New Template
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-800">
+              <DialogHeader>
+                <DialogTitle>{editingId ? 'Edit Template' : 'Add New Template'}</DialogTitle>
+                <DialogDescription>
+                  Fill in the template details below
+                </DialogDescription>
+              </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g., SaaS Cold Outreach"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Type</Label>
+                    <Select
+                      value={formData.type}
+                      onValueChange={value => setFormData(prev => ({ ...prev, type: value as 'free' | 'premium' }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="free">Free Template</SelectItem>
+                        <SelectItem value="premium">Premium Template</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Template Content */}
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g., SaaS Cold Outreach"
+                  <Label htmlFor="body">Email Body</Label>
+                  <Textarea
+                    id="body"
+                    value={formData.body}
+                    onChange={e => setFormData(prev => ({ ...prev, body: e.target.value }))}
+                    className="min-h-[200px] font-mono"
+                    placeholder="Enter your email template here..."
                     required
                   />
                 </div>
 
+                {/* Description */}
                 <div className="space-y-2">
-                  <Label htmlFor="type">Type</Label>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe when and how to use this template..."
+                    className="h-20"
+                  />
+                </div>
+
+                {/* Industry & Location */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="industry">Industry</Label>
+                    <Input
+                      id="industry"
+                      value={formData.industry}
+                      onChange={e => setFormData(prev => ({ ...prev, industry: e.target.value }))}
+                      placeholder="e.g., SaaS, Healthcare"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      placeholder="e.g., United States, Europe"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="score">Quality Score (1-100)</Label>
+                    <Input
+                      id="score"
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={formData.score}
+                      onChange={e => setFormData(prev => ({ ...prev, score: parseInt(e.target.value) || 0 }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="replyRate">Reply Rate (%)</Label>
+                    <Input
+                      id="replyRate"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.replyRate}
+                      onChange={e => setFormData(prev => ({ ...prev, replyRate: parseInt(e.target.value) || 0 }))}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Platform */}
+                <div className="space-y-2">
+                  <Label htmlFor="platform">Platform</Label>
                   <Select
-                    value={formData.type}
-                    onValueChange={value => setFormData(prev => ({ ...prev, type: value as 'free' | 'premium' }))}
+                    value={formData.platform}
+                    onValueChange={value => setFormData(prev => ({ ...prev, platform: value as 'smartlead' | 'linkedin' }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Select platform" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="free">Free Template</SelectItem>
-                      <SelectItem value="premium">Premium Template</SelectItem>
+                      <SelectItem value="smartlead">SmartLead</SelectItem>
+                      <SelectItem value="linkedin">LinkedIn</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              {/* Template Content */}
-              <div className="space-y-2">
-                <Label htmlFor="body">Email Body</Label>
-                <Textarea
-                  id="body"
-                  value={formData.body}
-                  onChange={e => setFormData(prev => ({ ...prev, body: e.target.value }))}
-                  className="min-h-[200px] font-mono"
-                  placeholder="Enter your email template here..."
-                  required
-                />
-              </div>
+                {/* Variables & Tags */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="variables">Variables (comma-separated)</Label>
+                    <Input
+                      id="variables"
+                      value={formData.variables}
+                      onChange={e => setFormData(prev => ({ ...prev, variables: e.target.value }))}
+                      placeholder="firstName, companyName, industry"
+                      required
+                    />
+                  </div>
 
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe when and how to use this template..."
-                  className="h-20"
-                />
-              </div>
-
-              {/* Industry & Location */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="industry">Industry</Label>
-                  <Input
-                    id="industry"
-                    value={formData.industry}
-                    onChange={e => setFormData(prev => ({ ...prev, industry: e.target.value }))}
-                    placeholder="e.g., SaaS, Healthcare"
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">Tags (comma-separated)</Label>
+                    <Input
+                      id="tags"
+                      value={formData.tags}
+                      onChange={e => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                      placeholder="cold-outreach, follow-up"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="e.g., United States, Europe"
-                    required
-                  />
+                {/* Form Actions */}
+                <div className="flex gap-4 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setFormData(initialFormData)
+                      setEditingId(null)
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {editingId ? 'Updating...' : 'Creating...'}
+                      </>
+                    ) : (
+                      <>{editingId ? 'Update Template' : 'Create Template'}</>
+                    )}
+                  </Button>
                 </div>
-              </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
-              {/* Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="score">Quality Score (1-100)</Label>
-                  <Input
-                    id="score"
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={formData.score}
-                    onChange={e => setFormData(prev => ({ ...prev, score: parseInt(e.target.value) || 0 }))}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="replyRate">Reply Rate (%)</Label>
-                  <Input
-                    id="replyRate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={formData.replyRate}
-                    onChange={e => setFormData(prev => ({ ...prev, replyRate: parseInt(e.target.value) || 0 }))}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Platform */}
-              <div className="space-y-2">
-                <Label htmlFor="platform">Platform</Label>
-                <Select
-                  value={formData.platform}
-                  onValueChange={value => setFormData(prev => ({ ...prev, platform: value as 'smartlead' | 'linkedin' }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="smartlead">SmartLead</SelectItem>
-                    <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Variables & Tags */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="variables">Variables (comma-separated)</Label>
-                  <Input
-                    id="variables"
-                    value={formData.variables}
-                    onChange={e => setFormData(prev => ({ ...prev, variables: e.target.value }))}
-                    placeholder="firstName, companyName, industry"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tags">Tags (comma-separated)</Label>
-                  <Input
-                    id="tags"
-                    value={formData.tags}
-                    onChange={e => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-                    placeholder="cold-outreach, follow-up"
-                  />
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex gap-4 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setIsDialogOpen(false)
-                    setFormData(initialFormData)
-                    setEditingId(null)
-                  }}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="flex-1"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {editingId ? 'Updating...' : 'Creating...'}
-                    </>
-                  ) : (
-                    <>{editingId ? 'Update Template' : 'Create Template'}</>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Input
-          type="search"
-          placeholder="Search templates..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+        {/* Search */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="search"
+              placeholder="Search templates..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-gray-800/50 border-gray-700 focus:border-blue-500"
+            />
+          </div>
+          <Select
+            value={filterType}
+            onValueChange={setFilterType}
+          >
+            <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-700">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="free">Free Templates</SelectItem>
+              <SelectItem value="premium">Premium Templates</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map(template => (
-          <Card key={template.id} className="group hover:shadow-lg transition-all">
+          <Card 
+            key={template.id} 
+            className="group hover:shadow-xl transition-all duration-200 bg-gray-800/50 border-gray-700 hover:border-blue-500/50"
+          >
             <CardHeader>
               <div className="flex justify-between items-start">
-                <CardTitle className="text-xl">{template.title}</CardTitle>
+                <CardTitle className="text-xl text-white group-hover:text-blue-400 transition-colors">
+                  {template.title}
+                </CardTitle>
                 <Badge 
                   variant={template.type === 'premium' ? 'default' : 'outline'}
-                  className="capitalize"
+                  className={`capitalize ${
+                    template.type === 'premium' 
+                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
+                      : 'border-gray-600'
+                  }`}
                 >
                   {template.type}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-500 mt-2">{template.description}</p>
+              <p className="text-sm text-gray-400 mt-2">{template.description}</p>
             </CardHeader>
             
             <CardContent>
@@ -465,8 +496,12 @@ export default function EmailTemplatesPage() {
                 <div className="flex items-center gap-3">
                   <Sparkles className="h-5 w-5 text-gray-500" />
                   <div>
-                    <p className="font-medium">Score: {template.score}/100</p>
-                    <p className="text-sm text-gray-500">Reply Rate: {template.replyRate}%</p>
+                    <p className="font-medium">Performance</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <span>Score: {template.score}/100</span>
+                      <span>•</span>
+                      <span>Reply Rate: {template.replyRate}%</span>
+                    </div>
                   </div>
                 </div>
 
@@ -474,7 +509,7 @@ export default function EmailTemplatesPage() {
                   <Building2 className="h-5 w-5 text-gray-500" />
                   <div>
                     <p className="font-medium">Industry</p>
-                    <p className="text-sm text-gray-500">{template.industry}</p>
+                    <p className="text-sm text-gray-400">{template.industry}</p>
                   </div>
                 </div>
 
@@ -482,7 +517,7 @@ export default function EmailTemplatesPage() {
                   <Globe className="h-5 w-5 text-gray-500" />
                   <div>
                     <p className="font-medium">Location</p>
-                    <p className="text-sm text-gray-500">{template.location}</p>
+                    <p className="text-sm text-gray-400">{template.location}</p>
                   </div>
                 </div>
 
@@ -490,19 +525,20 @@ export default function EmailTemplatesPage() {
                   <Variable className="h-5 w-5 text-gray-500" />
                   <div>
                     <p className="font-medium">Variables</p>
-                    <p className="text-sm text-gray-500">
-                      {template.variables.length > 0 
-                        ? template.variables.join(', ')
-                        : 'No variables'
-                      }
+                    <p className="text-sm text-gray-400">
+                      {template.variables.join(', ')}
                     </p>
                   </div>
                 </div>
 
-                {template.tags && template.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                {template.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
                     {template.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
+                      <Badge 
+                        key={tag} 
+                        variant="secondary" 
+                        className="bg-gray-700/50 text-gray-300 hover:bg-gray-700"
+                      >
                         {tag}
                       </Badge>
                     ))}
@@ -511,12 +547,12 @@ export default function EmailTemplatesPage() {
               </div>
             </CardContent>
 
-            <CardFooter className="border-t bg-muted/50 p-4 flex gap-2">
+            <CardFooter className="border-t border-gray-700/50 bg-gray-900/30 p-4 flex gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => handleEdit(template)} 
-                className="flex-1 h-9"
+                className="flex-1 h-9 bg-gray-800 hover:bg-gray-700 border-gray-600 hover:border-blue-500/50"
               >
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
@@ -524,26 +560,27 @@ export default function EmailTemplatesPage() {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
-                    variant="destructive" 
                     size="sm" 
-                    className="flex-1 h-9"
+                    className="flex-1 h-9 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="bg-gray-800 border-gray-700">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogDescription className="text-gray-400">
                       Are you sure you want to delete this template? This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600">
+                      Cancel
+                    </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleDelete(template.id)}
-                      className="bg-destructive hover:bg-destructive/90"
+                      className="bg-red-500 hover:bg-red-600"
                     >
                       Delete
                     </AlertDialogAction>
@@ -558,15 +595,13 @@ export default function EmailTemplatesPage() {
       {/* Empty State */}
       {filteredTemplates.length === 0 && (
         <div className="text-center py-12">
-          <Mail className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-500">No templates found</p>
-        </div>
-      )}
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <div className="bg-gray-800/50 rounded-full p-4 w-16 h-16 mx-auto mb-4">
+            <Mail className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-300">No templates found</h3>
+          <p className="text-gray-400 mt-2">
+            {searchTerm ? 'Try adjusting your search or filters' : 'Start by adding a new template'}
+          </p>
         </div>
       )}
     </div>

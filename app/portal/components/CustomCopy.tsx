@@ -26,7 +26,7 @@ import { useUser } from '@/contexts/UserContext'
 import { db } from '@/lib/firebase/config'
 import { collection, getDocs } from 'firebase/firestore'
 import { toast } from "@/components/ui/use-toast"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import {
   Select,
@@ -203,75 +203,111 @@ export default function CustomCopy() {
   }
 
   return (
-    <div className="space-y-8 p-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Email Templates</h1>
-      </div>
+    <div className="container mx-auto p-6">
+      {/* Header with Search and Filters */}
+      <div className="space-y-6 mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
+              Email Templates
+            </h1>
+            <p className="text-gray-400 mt-1">Browse and customize professional email templates</p>
+          </div>
+        </div>
 
-      <div className="space-y-6">
-        {/* Enhanced Search and Filter Section */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
+        {/* Advanced Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          {/* Search */}
+          <div className="relative md:col-span-5">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              type="search"
               placeholder="Search templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-gray-800/50 border-gray-700 focus:border-blue-500"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
           </div>
 
-          <Select
-            value={filters.industry}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, industry: value }))}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Industry" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Industries</SelectItem>
-              {industries.map(industry => (
-                <SelectItem key={industry} value={industry}>
-                  {industry}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Category Filter */}
+          <div className="md:col-span-3">
+            <Select value={filters.industry} onValueChange={(value) => setFilters(prev => ({ ...prev, industry: value }))}
+            >
+              <SelectTrigger className="w-full bg-gray-800/50 border-gray-700">
+                <SelectValue placeholder="Filter by industry" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Industries</SelectItem>
+                {industries.map(industry => (
+                  <SelectItem key={industry} value={industry}>
+                    {industry}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select
-            value={filters.location}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, location: value }))}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Location" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations.map(location => (
-                <SelectItem key={location} value={location}>
-                  {location}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Location Filter */}
+          <div className="md:col-span-3">
+            <Select value={filters.location} onValueChange={(value) => setFilters(prev => ({ ...prev, location: value }))}
+            >
+              <SelectTrigger className="w-full bg-gray-800/50 border-gray-700">
+                <SelectValue placeholder="Filter by location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {locations.map(location => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select
-            value={filters.sortBy}
-            onValueChange={(value) => setFilters(prev => ({ 
-              ...prev, 
-              sortBy: value as FilterOptions['sortBy']
-            }))}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="score">Score</SelectItem>
-              <SelectItem value="replyRate">Reply Rate</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Type Filter */}
+          <div className="md:col-span-3">
+            <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value as FilterOptions['type'] }))}
+            >
+              <SelectTrigger className="w-full bg-gray-800/50 border-gray-700">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="premium">Premium</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Platform Filter */}
+          <div className="md:col-span-3">
+            <Select value={filters.platform} onValueChange={(value) => setFilters(prev => ({ ...prev, platform: value as FilterOptions['platform'] }))}
+            >
+              <SelectTrigger className="w-full bg-gray-800/50 border-gray-700">
+                <SelectValue placeholder="Filter by platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Platforms</SelectItem>
+                <SelectItem value="smartlead">SmartLead</SelectItem>
+                <SelectItem value="linkedin">LinkedIn</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Sort Filter */}
+          <div className="md:col-span-3">
+            <Select value={filters.sortBy} onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value as FilterOptions['sortBy'] }))}
+            >
+              <SelectTrigger className="w-full bg-gray-800/50 border-gray-700">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="score">Score</SelectItem>
+                <SelectItem value="replyRate">Reply Rate</SelectItem>
+                <SelectItem value="date">Date</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Active Filters Display */}
@@ -282,194 +318,152 @@ export default function CustomCopy() {
                 <Badge 
                   key={key}
                   variant="secondary"
-                  className="px-3 py-1"
+                  className="bg-blue-500/10 text-blue-400 border-blue-500/20"
                 >
                   {key}: {value}
-                  <X 
-                    className="ml-2 h-4 w-4 cursor-pointer" 
-                    onClick={() => setFilters(prev => ({ ...prev, [key]: '' }))}
-                  />
+                  <button className="ml-2 hover:text-blue-300" onClick={() => setFilters(prev => ({ ...prev, [key]: '' }))}
+                  >
+                    ×
+                  </button>
                 </Badge>
               )
             }
             return null
           })}
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedTemplates.map(template => (
-            <Card 
-              key={template.id} 
-              className={cn(
-                "group hover:shadow-lg transition-all",
-                !canAccessTemplate(template) && "opacity-80"
-              )}
-            >
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl">{template.title}</CardTitle>
-                  <Badge 
-                    variant={template.type === 'premium' ? 'default' : 'outline'}
-                    className="capitalize"
-                  >
-                    {template.type}
-                  </Badge>
-                </div>
-                <p className="text-sm text-gray-500 mt-2">{template.description}</p>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <p className="font-medium">Score: {template.score}/100</p>
-                      <p className="text-sm text-gray-500">Reply Rate: {template.replyRate}%</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Building2 className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <p className="font-medium">Industry</p>
-                      <p className="text-sm text-gray-500">{template.industry}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <p className="font-medium">Location</p>
-                      <p className="text-sm text-gray-500">{template.location}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Variable className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <p className="font-medium">Variables</p>
-                      <p className="text-sm text-gray-500">
-                        {template.variables.length > 0 
-                          ? template.variables.join(', ')
-                          : 'No variables'
-                        }
-                      </p>
-                    </div>
-                  </div>
-
-                  {template.tags && template.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {template.tags.map(tag => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-
-              <CardFooter className="border-t bg-muted/50 p-4">
-                {canAccessTemplate(template) ? (
-                  <Button 
-                    className="w-full"
-                    onClick={() => {
-                      setSelectedTemplate(template)
-                      setShowTemplateDialog(true)
-                    }}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    View & Copy
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => {
-                      toast({
-                        title: "Premium Template",
-                        description: "Upgrade your plan to access premium templates",
-                        variant: "destructive"
-                      })
-                    }}
-                  >
-                    <Lock className="h-4 w-4 mr-2" />
-                    Upgrade Required
-                  </Button>
-                )}
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        {filteredTemplates.length > ITEMS_PER_PAGE && (
-          <div className="flex justify-center gap-2 mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <span className="flex items-center px-4">
-              Page {page} of {Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE)}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setPage(p => p + 1)}
-              disabled={page >= Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-
-        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>{selectedTemplate?.title}</DialogTitle>
-              <DialogDescription>
-                {selectedTemplate?.description}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="bg-muted p-4 rounded-md">
-                <pre className="whitespace-pre-wrap font-mono text-sm">
-                  {selectedTemplate?.body}
-                </pre>
-              </div>
-              
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Variables:</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedTemplate?.variables.map(variable => (
-                    <Badge key={variable} variant="outline">
-                      {variable}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <Button 
-                className="w-full"
-                onClick={() => selectedTemplate && handleCopyTemplate(selectedTemplate)}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Template
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {filteredTemplates.length === 0 && (
-          <div className="text-center py-12">
-            <Mail className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">No templates found</p>
-          </div>
-        )}
       </div>
+
+      {/* Templates Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+        {paginatedTemplates.map((template) => (
+          <Card 
+            key={template.id}
+            className="group hover:shadow-xl transition-all duration-200 bg-gray-800/50 border-gray-700 hover:border-blue-500/50 flex flex-col"
+          >
+            <CardHeader className="space-y-2">
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-xl text-white group-hover:text-blue-400 transition-colors">
+                  {template.title}
+                </CardTitle>
+                <Badge 
+                  variant={template.type === 'premium' ? 'default' : 'outline'}
+                  className={template.type === 'premium' 
+                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                    : 'border-gray-600'
+                  }
+                >
+                  {template.type}
+                </Badge>
+              </div>
+              <CardDescription className="text-gray-400 line-clamp-2">
+                {template.description}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="flex-grow">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <Sparkles className="h-4 w-4" />
+                  <span>Score: {template.score}/100</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <Building2 className="h-4 w-4" />
+                  <span>Industry: {template.industry}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <Globe className="h-4 w-4" />
+                  <span>Location: {template.location}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <Variable className="h-4 w-4" />
+                  <span>Variables: {template.variables.length > 0 ? template.variables.join(', ') : 'No variables'}</span>
+                </div>
+              </div>
+            </CardContent>
+
+            <CardFooter className="border-t border-gray-700/50 pt-4">
+              <Button
+                onClick={() => {
+                  setSelectedTemplate(template)
+                  setShowTemplateDialog(true)
+                }}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-gray-100"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Preview Template
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {filteredTemplates.length > ITEMS_PER_PAGE && (
+        <div className="flex justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <span className="flex items-center px-4">
+            Page {page} of {Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE)}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{selectedTemplate?.title}</DialogTitle>
+            <DialogDescription>
+              {selectedTemplate?.description}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-muted p-4 rounded-md">
+              <pre className="whitespace-pre-wrap font-mono text-sm">
+                {selectedTemplate?.body}
+              </pre>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Variables:</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedTemplate?.variables.map(variable => (
+                  <Badge key={variable} variant="outline">
+                    {variable}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <Button 
+              className="w-full"
+              onClick={() => selectedTemplate && handleCopyTemplate(selectedTemplate)}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Template
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {filteredTemplates.length === 0 && (
+        <div className="text-center py-12">
+          <Mail className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-500">No templates found</p>
+        </div>
+      )}
     </div>
   )
 } 
