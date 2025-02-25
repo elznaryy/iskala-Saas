@@ -153,12 +153,6 @@ export default function AdminLayout({
       id: 'users'
     },
     {
-      name: 'SmartLead',
-      icon: Mail,
-      href: '/admin/smartlead',
-      id: 'smartlead'
-    },
-    {
       name: 'Lead Finder',
       icon: Database,
       href: '#',
@@ -189,7 +183,7 @@ export default function AdminLayout({
       icon: Mail,
       href: '/admin/email-templates',
       id: 'email-templates'
-    },
+    }
   ]
 
   const renderNavItem = (item: NavItem) => {

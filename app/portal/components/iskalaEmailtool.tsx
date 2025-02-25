@@ -1,223 +1,142 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { 
+  ExternalLink, 
+  Key, 
+  Mail, 
+  MessageSquare, 
+  Shield, 
+  AlertCircle,
+  ArrowRight,
+  Sparkles
+} from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useUser } from '@/contexts/UserContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Shield, Loader2, Mail, Clock, ExternalLink } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
-import { db } from '@/lib/firebase/config'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
-import { toast } from "@/components/ui/use-toast"
-import { hasSmartLeadAccess } from '@/lib/utils/planUtils'
 import ProPlanRestriction from './ProPlanRestriction'
-
-interface SmartleadRequest {
-  companyName: string
-  email: string
-  password: string
-  status: 'pending' | 'active' | null  // Changed back to lowercase
-  submittedAt: any
-  userId?: string
-}
-
-const SMARTLEAD_COLLECTION = 'smartlead'
-const SMARTLEAD_URL = 'https://www.smartlead.ai/'
-const WEBHOOK_URL = 'https://hook.eu2.make.com/xdi76hcmr5tqnfxkdqhc3dtkj0svxgwp'
 
 export default function IskalaEmailTool() {
   const { userData } = useUser()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [requestStatus, setRequestStatus] = useState<SmartleadRequest | null>(null)
-  const [formData, setFormData] = useState({
-    companyName: '',
-    email: '',
-    password: ''
-  })
 
-  useEffect(() => {
-    const checkRequestStatus = async () => {
-      if (!userData?.uid) return
-      
-      const docRef = doc(db, SMARTLEAD_COLLECTION, userData.uid)
-      const docSnap = await getDoc(docRef)
-      
-      if (docSnap.exists()) {
-        setRequestStatus(docSnap.data() as SmartleadRequest)
-      }
-    }
-
-    checkRequestStatus()
-  }, [userData?.uid])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    try {
-      if (!userData?.uid) throw new Error('User not authenticated')
-
-      const requestData: SmartleadRequest = {
-        ...formData,
-        status: 'pending',
-        submittedAt: serverTimestamp(),
-        userId: userData.uid
-      }
-
-      // Save to Firestore
-      await setDoc(doc(db, SMARTLEAD_COLLECTION, userData.uid), requestData)
-
-      // Prepare webhook payload
-      const webhookPayload = {
-        userId: userData.uid,
-        companyName: formData.companyName,
-        email: formData.email,
-        password: formData.password.toString(), // Convert to string explicitly
-        status: 'pending',
-        submittedAt: new Date().toISOString(), // Convert timestamp to ISO string
-        userEmail: userData.email,
-        userName: userData.basicInfo?.name || '',
-        plan: userData.plan || 'free'
-      }
-
-      // Send to webhook
-      const webhookResponse = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(webhookPayload)
-      })
-
-      if (!webhookResponse.ok) {
-        throw new Error('Webhook request failed')
-      }
-
-      setRequestStatus(requestData)
-      toast({
-        title: "Request submitted successfully",
-        description: "We'll review your request and get back to you soon.",
-      })
-    } catch (error) {
-      console.error('Error submitting request:', error)
-      toast({
-        title: "Error",
-        description: "Failed to submit request. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const renderContent = () => {
-    if (!userData?.plan || userData.plan !== 'pro') {
-      return <ProPlanRestriction />
-    }
-
-    if (requestStatus?.status === 'active') {
-      return (
-        <div className="text-center space-y-6 p-8">
-          <div className="bg-green-500/10 p-4 rounded-full w-16 h-16 mx-auto">
-            <Shield className="w-8 h-8 text-green-500 mx-auto mt-2" />
-          </div>
-          <h2 className="text-2xl font-bold text-white">Your SmartLead Account is Active</h2>
-          <p className="text-gray-400">Click below to access your SmartLead dashboard</p>
-          <div className="bg-blue-500/10 rounded-lg p-4 text-sm text-blue-300 mb-4">
-            <p>Lost your credentials? Check your confirmation email or contact our support team.</p>
-          </div>
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => window.open(SMARTLEAD_URL, '_blank')}
-          >
-            Access SmartLead
-            <ExternalLink className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
-      )
-    }
-
-    if (requestStatus?.status === 'pending') {
-      return (
-        <div className="text-center space-y-6 p-8">
-          <div className="bg-yellow-500/10 p-4 rounded-full w-16 h-16 mx-auto">
-            <Clock className="w-8 h-8 text-yellow-500 mx-auto mt-2" />
-          </div>
-          <h2 className="text-2xl font-bold text-white">Request Pending</h2>
-          <p className="text-gray-400">
-            Your SmartLead account request is being processed. Please check your email for confirmation.
-          </p>
-          <div className="bg-yellow-500/10 rounded-lg p-4 text-sm text-yellow-300">
-            <p>Please check your email {userData?.basicInfo?.email} for the confirmation details.</p>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="max-w-md mx-auto p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">Request SmartLead Access</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Form fields */}
-          <div>
-            <label className="text-sm font-medium text-gray-200">Company Name</label>
-            <Input
-              type="text"
-              value={formData.companyName}
-              onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-              required
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-200">Email</label>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              required
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-200">Password</label>
-            <Input
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-              required
-              className="mt-1"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Submitting...
-              </>
-            ) : (
-              'Submit Request'
-            )}
-          </Button>
-        </form>
-      </div>
-    )
+  // Check if user has access based on their plan
+  if (!userData?.plan || userData.plan !== 'pro') {
+    return <ProPlanRestriction />
   }
 
   return (
-    <div className="container mx-auto px-4">
-      {renderContent()}
+    <div className="container mx-auto p-6 max-w-4xl">
+      {/* Header Section */}
+      <div className="space-y-4 mb-8">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
+          SmartLead Access
+        </h1>
+        <p className="text-gray-400">
+          Access your SmartLead demo account and explore powerful email automation features.
+        </p>
+      </div>
+
+      {/* Demo Credentials Card */}
+      <div className="grid gap-6 md:grid-cols-2 mb-8">
+        <Card className="bg-gray-800/50 border-gray-700 hover:border-blue-500/50 transition-all">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-blue-400" />
+              Demo Credentials
+            </CardTitle>
+            <CardDescription>
+              Use these credentials to access SmartLead
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300">Username</span>
+                </div>
+                <code className="bg-gray-800 px-2 py-1 rounded text-blue-400">
+                  Demo@iskala.net
+                </code>
+              </div>
+              <div className="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300">Password</span>
+                </div>
+                <code className="bg-gray-800 px-2 py-1 rounded text-blue-400">
+                  Demo@123
+                </code>
+              </div>
+            </div>
+
+            <Button 
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              onClick={() => window.open('https://app.smartlead.ai/', '_blank')}
+            >
+              Access SmartLead
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Support & Help Card */}
+        <Card className="bg-gray-800/50 border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-400" />
+              Need Help?
+            </CardTitle>
+            <CardDescription>
+              Our support team is here to assist you
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-400 mt-1" />
+                <p className="text-sm text-gray-300">
+                  If you experience any issues with the demo account or have questions, 
+                  please don't hesitate to contact our support team.
+                </p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              className="w-full bg-gray-700 hover:bg-gray-600"
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.$zoho?.salesiq) {
+                  window.$zoho.salesiq.floatwindow.visible('show')
+                }
+              }}
+            >
+              Contact Support
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sign Up Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center space-y-6 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl p-8 border border-blue-500/20"
+      >
+        <div className="flex items-center justify-center gap-2 text-2xl font-semibold text-white">
+          <Sparkles className="h-6 w-6 text-blue-400" />
+          Get Your Own Account
+        </div>
+        <p className="text-gray-300 max-w-2xl mx-auto">
+          Ready to take your email outreach to the next level? Sign up for your own SmartLead account today.
+        </p>
+        <Button 
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          onClick={() => window.open('https://www.smartlead.ai/?via=ehab', '_blank')}
+        >
+          Sign Up for SmartLead
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </motion.div>
     </div>
   )
 }

@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Building2,
   Crown,
-  MessageSquare
+  MessageSquare,
+  LucideIcon
 } from 'lucide-react'
 import { Loading } from './components/ui/loading'
 import { db } from '@/lib/firebase/config'
@@ -73,7 +74,7 @@ function StatCard({ title, value, icon, description, status }: StatCardProps) {
 interface BaseFeature {
   title: string
   description: string
-  icon: any
+  icon: LucideIcon
   color: string
   textColor: string
   borderColor: string
@@ -83,13 +84,14 @@ interface UsageFeature extends BaseFeature {
   isInfo?: false
   usage: number
   limit: number
-  href: string
+  href?: string
 }
 
 interface InfoFeature extends BaseFeature {
   isInfo: true
   value: string
   badge?: string
+  href?: string
 }
 
 interface SmartLeadStatus {
@@ -251,15 +253,16 @@ export default function PortalPage() {
       description: smartLeadStatus.status === 'pending' 
         ? "Your account request is being processed" 
         : smartLeadStatus.status === 'active'
-        ? "Access your SmartLead account"
-        : "Request your SmartLead account",
+        ? "Access your SmartLead Demo account"
+        : "Request your SmartLead Demo account",
       icon: MessageSquare,
-      usage: smartLeadStatus.status === 'active' ? 1 : 0,
-      limit: 1,
+      isInfo: true,
+      value: smartLeadStatus.status === 'active' ? 'Demo Access' : 'Request Access',
       href: "/portal/email-tool",
       color: "bg-indigo-500/10",
       textColor: "text-indigo-500",
-      borderColor: "border-indigo-500/20"
+      borderColor: "border-indigo-500/20",
+      badge: 'PRO'
     },
     {
       title: "Current Plan",
@@ -283,6 +286,12 @@ export default function PortalPage() {
       isInfo: true
     }
   ]
+
+  const handleNavigation = (href: string | undefined) => {
+    if (href) {
+      router.push(href)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -358,16 +367,18 @@ export default function PortalPage() {
                         />
                       </div>
                     </div>
-                    
-                    <Button
-                      variant="outline"
-                      className={`w-full ${feature.borderColor} ${feature.textColor} hover:bg-gray-800`}
-                      onClick={() => !feature.isInfo && router.push(feature.href)}
-                    >
-                      Access Feature
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
                   </>
+                )}
+                
+                {feature.href && (
+                  <Button
+                    variant="outline"
+                    className={`w-full ${feature.borderColor} ${feature.textColor} hover:bg-gray-800`}
+                    onClick={() => handleNavigation(feature.href)}
+                  >
+                    Access Feature
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 )}
               </div>
             </CardContent>
