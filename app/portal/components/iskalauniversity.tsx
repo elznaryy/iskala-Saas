@@ -406,7 +406,7 @@ export default function IskalaUniversity() {
             <div className="text-sm text-gray-400">Video Lessons</div>
           </div>
           <div className="text-center p-4 rounded-lg bg-gray-800/50">
-            <div className="text-2xl font-bold text-blue-400 mb-1">4h</div>
+            <div className="text-2xl font-bold text-blue-400 mb-1">10h</div>
             <div className="text-sm text-gray-400">Total Duration</div>
           </div>
           <div className="text-center p-4 rounded-lg bg-gray-800/50">

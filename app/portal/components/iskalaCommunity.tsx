@@ -19,7 +19,7 @@ export default function IskalaCommunity() {
       name: 'WhatsApp Community',
       description: 'Join our WhatsApp group for daily tips, updates, and networking with other Iskala users',
       icon: <MessageCircle className="w-12 h-12 text-green-500" />,
-      link: 'https://whatsapp.com/channel/your-community-link',
+      link: 'https://chat.whatsapp.com/LV6QyWGJxX40VQQxq0biyj',
       memberCount: 1500,
       backgroundColor: 'bg-green-500/10'
     },
@@ -27,7 +27,7 @@ export default function IskalaCommunity() {
       name: 'Slack Community',
       description: 'Connect with the Iskala community on Slack for in-depth discussions and collaboration',
       icon: <Slack className="w-12 h-12 text-blue-500" />,
-      link: 'https://join.slack.com/t/your-slack-workspace',
+      link: 'https://iskalaacademy.slack.com/join/shared_invite/zt-2ztzewq8k-AZbZ47Ls3LDvSeFCAPnIXg',
       memberCount: 2300,
       backgroundColor: 'bg-blue-500/10'
     }
