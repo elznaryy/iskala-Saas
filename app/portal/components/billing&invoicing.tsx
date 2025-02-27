@@ -43,6 +43,20 @@ const PLANS = {
       'Weekly expert sessions',
       '2,000 customized prospects list tailored to your ICP'
     ]
+  },
+  custom: {
+    name: 'Custom Plan',
+    price: 'Custom',
+    features: [
+      'All Pro plan features',
+      'Custom AI email limits',
+      'Dedicated account manager',
+      'Custom integrations',
+      'Priority 24/7 support',
+      'Tailored solutions',
+      'Enterprise-grade features',
+      'Custom reporting & analytics',
+    ]
   }
 }
 
@@ -65,6 +79,12 @@ export default function BillingAndInvoicing() {
     setShowContactDialog(false)
   }
 
+  const openZohoChat = () => {
+    if (typeof window !== 'undefined' && window.$zoho && window.$zoho.salesiq) {
+      window.$zoho.salesiq.floatwindow.visible('show')
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-6">
       <motion.div
@@ -77,7 +97,7 @@ export default function BillingAndInvoicing() {
           <p className="text-gray-400 mt-2">Choose the right plan for your needs</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {/* Free Plan Card */}
           <div className={`${currentPlan === 'free' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-900/30 border-gray-800'} rounded-lg p-6 border relative`}>
             <div className="space-y-6">
@@ -159,6 +179,36 @@ export default function BillingAndInvoicing() {
                   Upgrade to Pro
                 </Button>
               )}
+            </div>
+          </div>
+
+          {/* Custom Plan Card */}
+          <div className="bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-blue-900/20 rounded-lg p-6 border border-purple-500/20 relative">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold text-white mb-2">Custom Plan</h2>
+                <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
+                  Custom
+                  <span className="text-sm font-normal text-gray-400">/month</span>
+                </p>
+              </div>
+              
+              <ul className="space-y-3">
+                {PLANS.custom.features.map((feature, index) => (
+                  <li key={index} className="flex items-center text-gray-300">
+                    <Check className="w-5 h-5 mr-2 text-purple-500" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                onClick={openZohoChat}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2"
+              >
+                <Mail className="w-4 h-4" />
+                Contact for Custom Plan
+              </Button>
             </div>
           </div>
         </div>

@@ -7,7 +7,6 @@ import { onAuthStateChanged } from 'firebase/auth'
 import localFont from "next/font/local"
 import "./globals.css"
 import ZohoChat from '@/components/ui/ZohoChat'
-import { metadata } from './metadata'
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",

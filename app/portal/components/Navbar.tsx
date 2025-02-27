@@ -1,6 +1,6 @@
 'use client'
 
-import { Menu, Bell, LogOut, User } from 'lucide-react'
+import { Menu, Bell, LogOut, User, ChevronDown } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useUser } from '@/contexts/UserContext'
 import { signOut } from '@/lib/firebase/auth'
@@ -86,18 +86,24 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80">
-                  <div className="hidden sm:block text-right">
-                    <p className="text-sm font-medium text-white">
-                      {displayName}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {userData?.plan === 'pro' ? 'Pro Plan' : 'Free Plan'}
-                    </p>
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center gap-2 px-3 hover:bg-gray-800 transition-colors"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {userData?.basicInfo?.name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {userData?.basicInfo?.name || 'User'}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
                   </div>
-                </div>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
                   <Link href="/portal/profile" className="flex items-center">
                     <User className="mr-2 h-4 w-4" />

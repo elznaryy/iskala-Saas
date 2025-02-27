@@ -52,8 +52,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { useRouter } from 'next/navigation'
+import { Badge } from "@/components/ui/badge"
 
 interface ProspectRequest {
   id: string
@@ -428,6 +429,19 @@ export default function CustomizedProspects() {
     return matchesSearch && matchesStatus
   })
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'default'
+      case 'processing':
+        return 'destructive'
+      case 'completed':
+        return 'secondary'
+      default:
+        return 'default'
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -488,123 +502,106 @@ export default function CustomizedProspects() {
                 <p className="text-gray-400">Loading requests...</p>
               </div>
             </div>
-          ) : requests.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-300">No requests yet</h3>
-              <p className="text-gray-400 mt-2">
-                Start by requesting your first batch of prospects
-              </p>
-              <Button
-                onClick={() => setIsDialogOpen(true)}
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
-              >
-                Request Prospects
-              </Button>
-            </div>
           ) : (
-            <div className="space-y-4">
-              {filteredRequests.map((request, index) => (
-                <motion.div 
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-gray-900/50 rounded-lg p-6 border border-gray-700/50 hover:border-gray-600 transition-colors"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-white font-medium">{request.companyName}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs ${
-                          request.status === 'completed' ? 'bg-green-500/10 text-green-500' :
-                          request.status === 'processing' ? 'bg-yellow-500/10 text-yellow-500' :
-                          'bg-blue-500/10 text-blue-500'
-                        }`}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mt-3">
-                        <div>
-                          <p className="text-xs text-gray-500">Prospects</p>
-                          <p className="text-sm text-gray-300">{request.numberOfProspects}</p>
+            <div className="space-y-6">
+              {/* Requests Section */}
+              <div className="grid grid-cols-1 gap-6">
+                {filteredRequests.map((request) => (
+                  <Card key={request.id} className="w-full hover:shadow-lg transition-all duration-200">
+                    <CardHeader className="pb-4">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <CardTitle className="text-xl">{request.companyName}</CardTitle>
+                          <CardDescription>{request.email}</CardDescription>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Location</p>
-                          <p className="text-sm text-gray-300">{request.location || 'Any'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Position</p>
-                          <p className="text-sm text-gray-300">{request.position || 'Any'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Industry</p>
-                          <p className="text-sm text-gray-300">{request.industry || 'Any'}</p>
-                        </div>
-                      </div>
-
-                      {request.apolloLink && (
-                        <div className="mt-3">
-                          <a 
-                            href={request.apolloLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                        <div className="flex items-center gap-3">
+                          <Badge 
+                            variant={getStatusVariant(request.status)}
+                            className="capitalize px-3 py-1"
                           >
-                            <LinkIcon className="w-4 h-4" />
-                            Apollo Search Link
-                          </a>
+                            {request.status}
+                          </Badge>
+                          {request.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setRequestToEdit(request)}
+                                className="hover:bg-gray-800"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setRequestToDelete(request)}
+                                className="hover:bg-red-900/20 hover:text-red-500"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="grid md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <Users className="w-4 h-4" />
+                          <span>Prospects</span>
+                        </div>
+                        <p className="font-medium">{request.numberOfProspects.toLocaleString()}</p>
+                      </div>
+                      {request.location && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-gray-400">
+                            <MapPin className="w-4 h-4" />
+                            <span>Location</span>
+                          </div>
+                          <p className="font-medium">{request.location}</p>
                         </div>
                       )}
-
-                      <RequestStatusTimeline 
-                        status={request.status}
-                        submittedAt={request.submittedAt instanceof Date ? request.submittedAt : null}
-                        processedAt={request.processedAt}
-                        deliveryDate={request.deliveryDate}
-                      />
-
-                      <div className="flex items-center gap-2 mt-4">
-                        {request.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-blue-500 border-blue-500/20 hover:bg-blue-500/10"
-                              onClick={() => setRequestToEdit(request)}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-500 border-red-500/20 hover:bg-red-500/10"
-                              onClick={() => setRequestToDelete(request)}
-                            >
-                              <Trash className="w-4 h-4 mr-2" />
-                              Delete
-                            </Button>
-                          </>
-                        )}
+                      {request.industry && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-gray-400">
+                            <Building className="w-4 h-4" />
+                            <span>Industry</span>
+                          </div>
+                          <p className="font-medium">{request.industry}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                    {request.status !== 'pending' && (
+                      <div className="px-6 pb-6">
+                        <RequestStatusTimeline 
+                          status={request.status}
+                          submittedAt={request.submittedAt}
+                          processedAt={request.processedAt}
+                          deliveryDate={request.deliveryDate}
+                        />
                       </div>
-                    </div>
-
-                    {request.status === 'completed' && request.deliveryLink && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-green-500 border-green-500/20 hover:bg-green-500/10"
-                        onClick={() => window.open(request.deliveryLink, '_blank')}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download Prospects
-                      </Button>
                     )}
-                  </div>
-                </motion.div>
-              ))}
+                    {request.status === 'completed' && request.deliveryLink && (
+                      <CardFooter className="border-t bg-muted/50 p-4">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25"
+                          onClick={() => window.open(request.deliveryLink, '_blank')}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Prospects
+                        </Button>
+                      </CardFooter>
+                    )}
+                  </Card>
+                ))}
+              </div>
+
+              {filteredRequests.length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500">No requests found</p>
+                </div>
+              )}
             </div>
           )}
         </div>

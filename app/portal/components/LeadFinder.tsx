@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
@@ -12,7 +12,7 @@ import {
   SelectValue 
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Download, Search, MapPin, Building2, Mail, Users, Globe, Loader2, X } from 'lucide-react'
+import { Download, Search, MapPin, Building2, Mail, Users, Globe, Loader2, X, Shield } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
 import { toast } from 'react-hot-toast'
 import { db } from '@/lib/firebase/config'
@@ -67,7 +67,7 @@ export default function LeadFinder() {
     [leads]
   )
 
-  // Enhanced filtering with useMemo
+  // Move filteredLeads before pagination
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const matchesSearch = 
@@ -104,11 +104,19 @@ export default function LeadFinder() {
     })
   }, [leads, searchTerm, filters])
 
-  // Pagination
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [searchTerm, filters])
+
+  // Apply pagination after filtering
   const paginatedLeads = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE
     return filteredLeads.slice(start, start + ITEMS_PER_PAGE)
   }, [filteredLeads, page])
+
+  // Update the total pages calculation
+  const totalPages = Math.ceil(filteredLeads.length / ITEMS_PER_PAGE)
 
   useEffect(() => {
     fetchLeads()
@@ -276,70 +284,94 @@ export default function LeadFinder() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginatedLeads.map(lead => (
-          <Card key={lead.id} className="group hover:shadow-lg transition-all">
+          <Card key={lead.id} className="group bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-200 border border-gray-800 hover:border-blue-500/20">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-xl">{lead.name}</CardTitle>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold group-hover:text-blue-400 transition-colors">
+                    {lead.name}
+                  </CardTitle>
+                  <CardDescription>{lead.description}</CardDescription>
+                </div>
                 <Badge 
-                  variant={lead.planType === 'pro' ? 'default' : 'outline'}
-                  className="capitalize"
+                  variant={lead.planType === 'pro' ? 'default' : 'secondary'}
+                  className={`px-3 py-1 ${
+                    lead.planType === 'pro' 
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-none' 
+                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  }`}
                 >
-                  {lead.planType === 'pro' ? 'Pro' : 'Free'}
+                  {lead.planType === 'pro' ? 'Pro' : 'FREE'}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Users className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="font-medium">{lead.leadCount.toLocaleString()} Leads</p>
+                {/* Lead Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-br from-blue-600/10 via-blue-600/5 to-transparent rounded-lg p-3 border border-blue-500/20">
+                    <p className="text-sm text-blue-300">Total Leads</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl font-bold text-blue-400">{lead.leadCount.toLocaleString()}</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Globe className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="font-medium">Locations</p>
-                    <p className="text-sm text-gray-500">{lead.locations.join(', ')}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Building2 className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="font-medium">Industries</p>
-                    <p className="text-sm text-gray-500">{lead.industries.join(', ')}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Mail className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="font-medium">Email Status</p>
-                    <Badge variant={lead.hasVerifiedEmails ? "success" : "warning"}>
+                  <div className="bg-gradient-to-br from-purple-600/10 via-purple-600/5 to-transparent rounded-lg p-3 border border-purple-500/20">
+                    <p className="text-sm text-purple-300">Email Status</p>
+                    <Badge variant={lead.hasVerifiedEmails ? "success" : "warning"} className="mt-1">
                       {lead.hasVerifiedEmails ? 'Verified' : 'Unverified'}
                     </Badge>
                   </div>
                 </div>
+
+                {/* Location & Industry */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-indigo-400">
+                    <Globe className="h-5 w-5 text-indigo-400" />
+                    <div>
+                      <p className="font-medium">Locations</p>
+                      <p className="text-sm text-indigo-300">{lead.locations.join(', ')}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-violet-400">
+                    <Building2 className="h-5 w-5 text-violet-400" />
+                    <div>
+                      <p className="font-medium">Industries</p>
+                      <p className="text-sm text-violet-300">{lead.industries.join(', ')}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
-            <CardFooter className="border-t bg-muted/50 p-4">
+            <CardFooter className="border-t border-gray-800/50 pt-4">
               <Button 
                 variant={canAccessLead(lead) ? "default" : "outline"}
-                className="w-full h-9"
+                className={`w-full h-10 ${
+                  canAccessLead(lead) 
+                    ? "bg-gradient-to-r from-gray-700 to-gray-800 hover:from-blue-600 hover:to-indigo-600 text-gray-200 hover:text-white transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25" 
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                } flex items-center justify-center gap-2 rounded-xl group`}
                 onClick={() => handleDownload(lead)}
                 disabled={!canAccessLead(lead)}
               >
-                <Download className="h-4 w-4 mr-2" />
-                {canAccessLead(lead) ? 'Download Now' : 'Upgrade Required'}
+                {canAccessLead(lead) ? (
+                  <>
+                    <Download className="h-4 w-4 group-hover:text-blue-200" />
+                    <span>Download Now</span>
+                  </>
+                ) : (
+                  <>
+                    <Shield className="h-4 w-4" />
+                    <span>Upgrade Required</span>
+                  </>
+                )}
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
 
-      {/* Pagination */}
+      {/* Update the pagination section */}
       {filteredLeads.length > ITEMS_PER_PAGE && (
         <div className="flex justify-center gap-2 mt-6">
           <Button
@@ -350,12 +382,12 @@ export default function LeadFinder() {
             Previous
           </Button>
           <span className="flex items-center px-4">
-            Page {page} of {Math.ceil(filteredLeads.length / ITEMS_PER_PAGE)}
+            Page {page} of {totalPages}
           </span>
           <Button
             variant="outline"
             onClick={() => setPage(p => p + 1)}
-            disabled={page >= Math.ceil(filteredLeads.length / ITEMS_PER_PAGE)}
+            disabled={page >= totalPages}
           >
             Next
           </Button>

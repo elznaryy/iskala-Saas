@@ -13,8 +13,9 @@ const plans = [
     features: [
       `${PLAN_LIMITS.free.aiEmailLimit} AI emails per month`,
       'Basic email templates',
+      'Middle East 100K Free Leads',
       'Community support',
-      'Basic email automation',
+      
       'Iskala university access'
     ]
   },
@@ -40,13 +41,17 @@ const plans = [
     name: "Enterprise Plan",
     price: "Custom",
     features: [
-      "Unlimited AI emails",
       "All Pro plan features",
+      "Custom AI email limits",
       "Dedicated account manager",
-      "Custom solutions",
-      "API access",
-      "Advanced analytics",
-      "Custom training sessions"
+      "CRM integrations",
+      "Priority 24/7 support",
+      "Tailored solutions",
+      "Custom reporting & analytics",
+      "Onboarding assistance",
+      "Team training sessions",
+      "Custom workflow automation",
+      
     ]
   }
 ];

@@ -66,7 +66,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         },
         {
           id: 'custom-copy',
-          name: 'Custom Copy',
+          name: 'Email Templates',
           icon: <FileText className="w-4 h-4" />,
           href: '/portal/custom-copy'
         }

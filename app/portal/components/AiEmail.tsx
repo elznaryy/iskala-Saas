@@ -534,9 +534,9 @@ export default function AiEmail() {
               animate={{ opacity: 1, y: 0 }}
               className="flex justify-center items-center min-h-[400px]"
             >
-              <div className="text-center space-y-8 max-w-xl p-8 rounded-lg bg-gradient-to-b from-gray-800/30 to-gray-900/30 border border-gray-700/50">
-                <div>
-                  <div className="w-16 h-16 rounded-2xl bg-blue-600/20 flex items-center justify-center mx-auto mb-6">
+              <div className="text-center space-y-8 max-w-xl p-8 rounded-lg bg-gradient-to-b from-gray-800/30 to-gray-900/30 border border-gray-700/50 w-full">
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-2xl bg-blue-600/20 flex items-center justify-center mb-6">
                     <Bot className="w-8 h-8 text-blue-400" />
                   </div>
                   <h3 className="text-2xl font-semibold text-white mb-3">
@@ -547,14 +547,16 @@ export default function AiEmail() {
                   </p>
                 </div>
                 
-                <Button
-                  onClick={handleEmailStrategy}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-6 h-auto flex flex-col items-center gap-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-[1.02]"
-                >
-                  <Sparkles className="w-6 h-6" />
-                  <span className="text-lg font-medium">Generate Email Copy</span>
-                  <span className="text-sm text-blue-200 opacity-90">Get AI-powered email strategies</span>
-                </Button>
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleEmailStrategy}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-6 h-auto flex flex-col items-center gap-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                  >
+                    <Sparkles className="w-6 h-6" />
+                    <span className="text-lg font-medium">Generate Email Copy</span>
+                    <span className="text-sm text-blue-200 opacity-90">Get AI-powered email strategies</span>
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
